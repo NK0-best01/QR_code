@@ -26,7 +26,14 @@
 3. **Zod 4 Schema Validation:** ใช้ Zod กำหนดความยาว UID ไม่เกิน 128 ตัวอักษร, ป้องกันอักขระควบคุม (`CONTROL_CHARS_REGEX`), และตรวจสอบว่าจังหวัดตรงกับภาคจริงผ่าน `isProvinceInRegion`
 
 ## Phase 2: Responsive Detection + Layout หน้าแรก
-1. **useSyncExternalStore:** ใช้ `useSyncExternalStore` เพื่อตรวจจับและติดตามการเปลี่ยนแปลงของ Media Queries (`max-width: 767px` และ `pointer: coarse`) โดยตรง ทำให้ได้ client/server snapshot ที่ปลอดภัยจาก hydration mismatch และไม่เกิดปัญหา cascading renders (ไม่มี setState synchronously ใน effect) ตามมาตรฐาน React 19
+1. **useSyncExternalStore:** ใช้ `useSyncExternalStore` เพื่อตรวจจับและติดตามการเปลี่ยนแปลงของ Media Query (`max-width: 767px`) ตามขนาดหน้าจอจริง โดยตรง ทำให้ได้ client/server snapshot ที่ปลอดภัยจาก hydration mismatch และไม่เกิดปัญหา cascading renders (ไม่มี setState synchronously ใน effect) ตามมาตรฐาน React 19
 2. **Skeleton Fallback:** ระหว่างรอ client hydrate จะแสดง Skeleton Placeholder ขนาดเท่าของจริง เพื่อไม่ให้เกิด Content Layout Shift (CLS)
-3. **Manual Override Support:** มีปุ่มสลับโหมดด้วยตนเอง ให้ผู้ใช้กดเปลี่ยนโหมดได้ทันทีหากระบบเดาอุปกรณ์ผิดพลาด
+3. **Pure Screen-Width Separation:** แยก PC (>= 768px -> Snip) และ Mobile (< 768px -> Camera) แบบอัตโนมัติตามขนาดหน้าจอ 100%
+
+## Phase 3: กรอก Text และส่ง UID ไปหน้าสมัคร
+1. **Centralized UID Navigation Helper:** แยกฟังก์ชันการตรวจเช็ค UID (`validateUidLocally`, `checkUidExists`, `buildRegisterUrl`) ไว้ที่ `src/lib/uid-navigation.ts` เพื่อให้จุดสแกนกล้อง (Phase 6) และจับภาพหน้าจอ (Phase 7) สามารถเรียกใช้งานซ้ำได้ โดยไม่ต้องเขียน logic ซ้ำซ้อน
+2. **Pre-navigation Existence Check:** ก่อนส่งผู้ใช้ไปหน้าสมัคร จะยิง `GET /api/uids/[uid]/exists` ทันที หากพบว่า UID นี้เคยลงทะเบียนแล้ว จะแสดง alert แจ้งเตือนสีแดงทันทีและคงผู้ใช้ไว้ที่หน้าแรก
+3. **Safe Parameter Encoding & Suspense:** ส่ง UID ผ่าน `encodeURIComponent` ใน URL query param (`/register?uid=...`) รองรับอักขระพิเศษภาษาไทยและสัญลักษณ์ (`& = # %`) พร้อมใช้ `<Suspense>` ครอบ `useSearchParams` เพื่อรองรับ Next.js App Router Client Component
+4. **Fallback Redirection & Back Button:** หากผู้ใช้เข้า `/register` โดยตรงโดยไม่มี param `uid` ระบบจะ redirect กลับหน้าแรกทันที และมีปุ่ม "ย้อนกลับเพื่อแก้ UID" เพื่อให้ผู้ใช้สามารถกลับไปแก้ไข UID ได้อย่างสะดวก
+
 
