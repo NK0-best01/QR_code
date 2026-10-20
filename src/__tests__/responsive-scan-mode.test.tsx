@@ -1,0 +1,240 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import React from 'react';
+import { ScanPanel } from '../components/ScanPanel';
+import messages from '../lib/messages';
+
+type MatchMediaListener = (event: MediaQueryListEvent) => void;
+
+interface MockMediaQueryList extends MediaQueryList {
+  _triggerChange: (matches: boolean) => void;
+}
+
+function createMatchMediaMock(initialMatches: Record<string, boolean>) {
+  const listenersMap = new Map<string, Set<MatchMediaListener>>();
+  const matchesState = { ...initialMatches };
+
+  const mockFn = vi.fn().mockImplementation((query: string): MockMediaQueryList => {
+    if (!listenersMap.has(query)) {
+      listenersMap.set(query, new Set());
+    }
+
+    return {
+      get matches() {
+        return matchesState[query] ?? false;
+      },
+      media: query,
+      onchange: null,
+      addListener: vi.fn((listener: MatchMediaListener) => {
+        listenersMap.get(query)?.add(listener);
+      }),
+      removeListener: vi.fn((listener: MatchMediaListener) => {
+        listenersMap.get(query)?.delete(listener);
+      }),
+      addEventListener: vi.fn((event: string, listener: EventListenerOrEventListenerObject) => {
+        if (event === 'change') {
+          listenersMap.get(query)?.add(listener as MatchMediaListener);
+        }
+      }),
+      removeEventListener: vi.fn((event: string, listener: EventListenerOrEventListenerObject) => {
+        if (event === 'change') {
+          listenersMap.get(query)?.delete(listener as MatchMediaListener);
+        }
+      }),
+      dispatchEvent: vi.fn(),
+      _triggerChange: (newMatches: boolean) => {
+        matchesState[query] = newMatches;
+        const listeners = listenersMap.get(query);
+        if (listeners) {
+          const event = { matches: newMatches, media: query } as MediaQueryListEvent;
+          listeners.forEach((l) => l(event));
+        }
+      },
+    };
+  });
+
+  return {
+    mockFn,
+    setMatches: (query: string, matches: boolean) => {
+      matchesState[query] = matches;
+      const listeners = listenersMap.get(query);
+      if (listeners) {
+        const event = { matches, media: query } as MediaQueryListEvent;
+        listeners.forEach((l) => l(event));
+      }
+    },
+  };
+}
+
+describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPanel)', () => {
+  const originalMediaDevices = navigator.mediaDevices;
+
+  beforeEach(() => {
+    // Default mock media devices with both features available
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: {
+        getUserMedia: vi.fn(),
+        getDisplayMedia: vi.fn(),
+      },
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: originalMediaDevices,
+      writable: true,
+      configurable: true,
+    });
+    vi.restoreAllMocks();
+  });
+
+  it('mock matchMedia: 1024px (Desktop) แสดงปุ่ม Snip (ลากเมาส์เลือกพื้นที่หน้าจอ)', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': false,
+      '(pointer: coarse)': false,
+    });
+    window.matchMedia = mockFn;
+
+    render(<ScanPanel />);
+
+    const scanBtn = screen.getByTestId('btn-scan-qr');
+    expect(scanBtn).toHaveTextContent(messages.scan.scanQrScreen);
+    expect(scanBtn).not.toBeDisabled();
+    expect(screen.getByTestId('btn-manual-input')).toHaveTextContent(messages.scan.manualInput);
+  });
+
+  it('mock matchMedia: 375px (Mobile) แสดงปุ่มกล้อง (เปิดกล้องสแกน QR)', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': true,
+      '(pointer: coarse)': true,
+    });
+    window.matchMedia = mockFn;
+
+    render(<ScanPanel />);
+
+    const scanBtn = screen.getByTestId('btn-scan-qr');
+    expect(scanBtn).toHaveTextContent(messages.scan.scanQrCamera);
+    expect(scanBtn).not.toBeDisabled();
+  });
+
+  it('pointer: coarse + จอกว้าง (iPad) → โหมดกล้อง', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': false, // จอกว้าง เช่น iPad
+      '(pointer: coarse)': true,   // จอสัมผัส coarse pointer
+    });
+    window.matchMedia = mockFn;
+
+    render(<ScanPanel />);
+
+    const scanBtn = screen.getByTestId('btn-scan-qr');
+    expect(scanBtn).toHaveTextContent(messages.scan.scanQrCamera);
+  });
+
+  it('resize ข้าม breakpoint → ปุ่มเปลี่ยนตาม', () => {
+    const { mockFn, setMatches } = createMatchMediaMock({
+      '(max-width: 767px)': false,
+      '(pointer: coarse)': false,
+    });
+    window.matchMedia = mockFn;
+
+    render(<ScanPanel />);
+
+    // Initially desktop snip
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+
+    // Simulate resizing to mobile width
+    act(() => {
+      setMatches('(max-width: 767px)', true);
+    });
+
+    // Should change to camera
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrCamera);
+
+    // Resize back to desktop
+    act(() => {
+      setMatches('(max-width: 767px)', false);
+    });
+
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+  });
+
+  it('ไม่มี getDisplayMedia → ปุ่ม Snip ใช้ไม่ได้ + แสดงข้อความเตือน', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': false,
+      '(pointer: coarse)': false,
+    });
+    window.matchMedia = mockFn;
+
+    // Simulate lack of getDisplayMedia
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: {
+        getUserMedia: vi.fn(),
+        getDisplayMedia: undefined,
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    render(<ScanPanel />);
+
+    const scanBtn = screen.getByTestId('btn-scan-qr');
+    expect(scanBtn).toBeDisabled();
+    expect(screen.getByTestId('unsupported-warning')).toHaveTextContent(
+      messages.scan.screenNotSupported
+    );
+  });
+
+  it('ไม่มี getUserMedia → ปุ่มกล้อง disabled + แสดงข้อความเตือน', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': true,
+      '(pointer: coarse)': true,
+    });
+    window.matchMedia = mockFn;
+
+    // Simulate lack of getUserMedia
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: {
+        getUserMedia: undefined,
+        getDisplayMedia: vi.fn(),
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    render(<ScanPanel />);
+
+    const scanBtn = screen.getByTestId('btn-scan-qr');
+    expect(scanBtn).toBeDisabled();
+    expect(screen.getByTestId('unsupported-warning')).toHaveTextContent(
+      messages.scan.cameraNotSupported
+    );
+  });
+
+  it('ปุ่มสลับโหมดด้วยมือทำงาน', () => {
+    const { mockFn } = createMatchMediaMock({
+      '(max-width: 767px)': false,
+      '(pointer: coarse)': false,
+    });
+    window.matchMedia = mockFn;
+
+    render(<ScanPanel />);
+
+    // Starts in Desktop snip mode
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+
+    // Click toggle button
+    const toggleBtn = screen.getByTestId('btn-toggle-scan-mode');
+    fireEvent.click(toggleBtn);
+
+    // Switches to Camera mode
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrCamera);
+
+    // Click toggle button again
+    fireEvent.click(toggleBtn);
+
+    // Switches back to Snip mode
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+  });
+});

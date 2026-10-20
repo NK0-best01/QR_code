@@ -24,3 +24,9 @@
 1. **SQLite Concurrency & Socket Timeout:** บน SQLite การเรียก transaction แบบ concurrent สูง (เช่น 50 concurrent requests) ต้องตั้งค่า `connection_limit=1` และ `socket_timeout=60` ใน Connection URL เพื่อให้ Prisma queue คำขอในระดับ process แทนการแย่ง file lock ของ OS และเพิ่ม retry backoff สำหรับกรณี transient lock/contention
 2. **Atomic Counter Reservation:** จอง `lastSeq` และ insert `registration` ภายใน `$transaction` เดียวกัน เมื่อเกิด UID ชน (P2002 บน `uid`) จะ rollback ทันทีทำให้ counter ไม่ขยับและไม่สูญเสียเลขรัน
 3. **Zod 4 Schema Validation:** ใช้ Zod กำหนดความยาว UID ไม่เกิน 128 ตัวอักษร, ป้องกันอักขระควบคุม (`CONTROL_CHARS_REGEX`), และตรวจสอบว่าจังหวัดตรงกับภาคจริงผ่าน `isProvinceInRegion`
+
+## Phase 2: Responsive Detection + Layout หน้าแรก
+1. **useSyncExternalStore:** ใช้ `useSyncExternalStore` เพื่อตรวจจับและติดตามการเปลี่ยนแปลงของ Media Queries (`max-width: 767px` และ `pointer: coarse`) โดยตรง ทำให้ได้ client/server snapshot ที่ปลอดภัยจาก hydration mismatch และไม่เกิดปัญหา cascading renders (ไม่มี setState synchronously ใน effect) ตามมาตรฐาน React 19
+2. **Skeleton Fallback:** ระหว่างรอ client hydrate จะแสดง Skeleton Placeholder ขนาดเท่าของจริง เพื่อไม่ให้เกิด Content Layout Shift (CLS)
+3. **Manual Override Support:** มีปุ่มสลับโหมดด้วยตนเอง ให้ผู้ใช้กดเปลี่ยนโหมดได้ทันทีหากระบบเดาอุปกรณ์ผิดพลาด
+
