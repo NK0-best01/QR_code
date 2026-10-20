@@ -37,9 +37,9 @@ test.describe('Phase 2 E2E: Responsive Detection on Home Page', () => {
     await expect(scanBtn).toHaveText(/เปิดกล้องสแกน QR/);
   });
 
-  test('iPad Pro device (coarse pointer / tablet) shows Camera button', async ({ browser }) => {
+  test('mobile device (iPhone 12 / narrow screen < 768px) shows Camera button', async ({ browser }) => {
     const context = await browser.newContext({
-      ...devices['iPad Pro 11'],
+      ...devices['iPhone 12'],
     });
     const page = await context.newPage();
     await page.goto('/');

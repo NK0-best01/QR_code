@@ -16,31 +16,28 @@ export interface UseScanModeReturn {
   setMode: (mode: ScanMode) => void;
 }
 
+// Breakpoint md = 768px (PC: >= 768px, Mobile: < 768px)
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+
 function subscribeMedia(callback: () => void) {
   if (typeof window === 'undefined' || !window.matchMedia) {
     return () => {};
   }
 
-  const mqMobile = window.matchMedia('(max-width: 767px)');
-  const mqCoarse = window.matchMedia('(pointer: coarse)');
-
+  const mqMobile = window.matchMedia(MOBILE_MEDIA_QUERY);
   const listener = () => callback();
 
   if (mqMobile.addEventListener) {
     mqMobile.addEventListener('change', listener);
-    mqCoarse.addEventListener('change', listener);
   } else {
     mqMobile.addListener(listener);
-    mqCoarse.addListener(listener);
   }
 
   return () => {
     if (mqMobile.removeEventListener) {
       mqMobile.removeEventListener('change', listener);
-      mqCoarse.removeEventListener('change', listener);
     } else {
       mqMobile.removeListener(listener);
-      mqCoarse.removeListener(listener);
     }
   };
 }
@@ -49,9 +46,9 @@ function getClientAutoMode(): ScanMode {
   if (typeof window === 'undefined' || !window.matchMedia) {
     return 'camera';
   }
-  const isMobile = window.matchMedia('(max-width: 767px)').matches;
-  const isCoarse = window.matchMedia('(pointer: coarse)').matches;
-  return isMobile || isCoarse ? 'camera' : 'snip';
+  // แยกตามขนาดหน้าจอ: จอแคบ (< 768px) เป็นมือถือ (กล้อง), จอกว้าง (>= 768px) เป็น PC (snip)
+  const isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+  return isMobile ? 'camera' : 'snip';
 }
 
 function getServerAutoMode(): ScanMode | undefined {

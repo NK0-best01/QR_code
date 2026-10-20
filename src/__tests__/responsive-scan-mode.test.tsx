@@ -119,17 +119,23 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
     expect(scanBtn).not.toBeDisabled();
   });
 
-  it('pointer: coarse + จอกว้าง (iPad) → โหมดกล้อง', () => {
-    const { mockFn } = createMatchMediaMock({
-      '(max-width: 767px)': false, // จอกว้าง เช่น iPad
-      '(pointer: coarse)': true,   // จอสัมผัส coarse pointer
+  it('แยก PC vs Mobile ตามขนาดหน้าจอ: จอกว้าง (>= 768px) เป็น PC (Snip), จอแคบ (< 768px) เป็น Mobile (กล้อง)', () => {
+    // 1. PC: จอกว้าง
+    const { mockFn: mockPc } = createMatchMediaMock({
+      '(max-width: 767px)': false,
     });
-    window.matchMedia = mockFn;
+    window.matchMedia = mockPc;
+    const { unmount } = render(<ScanPanel />);
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+    unmount();
 
+    // 2. Mobile: จอแคบ
+    const { mockFn: mockMobile } = createMatchMediaMock({
+      '(max-width: 767px)': true,
+    });
+    window.matchMedia = mockMobile;
     render(<ScanPanel />);
-
-    const scanBtn = screen.getByTestId('btn-scan-qr');
-    expect(scanBtn).toHaveTextContent(messages.scan.scanQrCamera);
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrCamera);
   });
 
   it('resize ข้าม breakpoint → ปุ่มเปลี่ยนตาม', () => {
