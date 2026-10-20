@@ -55,5 +55,13 @@
 4. **Context-aware Camera Error Handling:** ตรวจสอบและแสดงข้อความภาษาไทยที่ตรงกับสาเหตุจริง (`NotAllowedError`, `NotFoundError`, `NotReadableError`, Insecure Context) โดยมีปุ่ม "กรอกข้อความเอง" เป็นทางเลือกสำรองเสมอ
 5. **Unified Navigation Pipeline:** ใช้ `processScannedUid` ที่แชร์ร่วมกับ Phase 3 ในการตรวจเช็คความถูกต้องและตรวจ UID ซ้ำผ่าน API ก่อนส่งผู้ใช้ไปหน้า `/register?uid=...` อย่างราบรื่น
 
+## Phase 7: จับภาพหน้าจอและ crop QR บน PC (`RegionSnipper.tsx` & `crop.ts`)
+1. **Immediate Stream Stop in `finally`:** หลังเรียก `getDisplayMedia` จะวาดภาพเฟรมเดียวลงบน off-screen snapshot canvas และสั่ง `track.stop()` ทุก track ในบล็อก `finally` ทันที เพื่อไม่ให้ค้างแถบ screen-sharing indicator บน OS
+2. **Robust Multi-directional Normalization (`src/lib/crop.ts`):** ฟังก์ชัน `normalizeSelection` คำนวณ `min(x1, x2)`, `min(y1, y2)` ทำให้รองรับการลากเมาส์ทุกทิศทาง (รวมถึงลากย้อนกลับจากขวาล่างไปซ้ายบน) ได้กรอบพิกัดที่ถูกต้อง 100%
+3. **Minimum Size Guard & Boundary Clamping:** ตรวจสอบขนาดกรอบ หากเล็กกว่า 10px ในด้านใดด้านหนึ่ง จะข้ามการประมวลผลทันทีเพื่อป้องกัน accidental clicks และ clamp พิกัดให้อยู่ในขอบเขตภาพธรรมชาติ (`naturalWidth`, `naturalHeight`) เสมอ
+4. **HiDPI / Scaling Precision:** แปลงพิกัดการแสดงผลหน้าจอไปยังพิกัดภาพธรรมชาติด้วยอัตราส่วน `naturalWidth / displayWidth` และ `naturalHeight / displayHeight` รองรับทั้งจอมาตรฐานและจอ Retina/HiDPI
+5. **Interactive Fullscreen Overlay:** มีหน้าต่างมาร์กเกอร์สีมืดครอบหน้าจอ พร้อมแสดงภาพจริงที่ถูกครอบอย่างคมชัด มีมุมไกด์สีขาวและเส้นขอบสีฟ้า พร้อมรองรับปุ่ม `Esc` เพื่อยกเลิก และหากเลือกพื้นที่ที่ไม่พบ QR จะมีแจ้งเตือนสีเหลืองและอนุญาตให้ลากครอบใหม่ได้ทันทีโดยไม่ต้องเปิด screen capture ใหม่
+
+
 
 

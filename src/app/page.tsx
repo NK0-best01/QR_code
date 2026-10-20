@@ -4,18 +4,25 @@ import React, { useState } from 'react';
 import { ScanPanel } from '@/components/ScanPanel';
 import { ManualInput } from '@/components/ManualInput';
 import { CameraScanner } from '@/components/CameraScanner';
+import { RegionSnipper } from '@/components/RegionSnipper';
 import { useScanMode } from '@/hooks/useScanMode';
 import messages from '@/lib/messages';
 
 export default function HomePage() {
   const [showManualInput, setShowManualInput] = useState(false);
   const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const [showRegionSnipper, setShowRegionSnipper] = useState(false);
   const scanModeHook = useScanMode();
 
   const handleScanClick = () => {
     if (scanModeHook.mode === 'camera') {
       setShowCameraScanner(true);
       setShowManualInput(false);
+      setShowRegionSnipper(false);
+    } else if (scanModeHook.mode === 'snip') {
+      setShowRegionSnipper(true);
+      setShowManualInput(false);
+      setShowCameraScanner(false);
     }
   };
 
@@ -48,12 +55,20 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Dynamic Section: Camera Scanner | Manual Input | Scan Panel */}
+        {/* Dynamic Section: Camera Scanner | Region Snipper | Manual Input | Scan Panel */}
         {showCameraScanner ? (
           <CameraScanner
             onClose={() => setShowCameraScanner(false)}
             onSwitchToManual={() => {
               setShowCameraScanner(false);
+              setShowManualInput(true);
+            }}
+          />
+        ) : showRegionSnipper ? (
+          <RegionSnipper
+            onClose={() => setShowRegionSnipper(false)}
+            onSwitchToManual={() => {
+              setShowRegionSnipper(false);
               setShowManualInput(true);
             }}
           />

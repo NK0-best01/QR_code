@@ -450,15 +450,15 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - เมื่อสำเร็จ → เช็ค UID ซ้ำ → ส่งต่อหน้า register
 
 **Tests**
-- [ ] `crop.ts` ถูกต้องหลายค่า scale/DPR
-- [ ] ลากทิศกลับยังได้กรอบถูกต้อง
-- [ ] กรอบเล็กเกินไม่ถูกประมวลผล
-- [ ] mock `getDisplayMedia` reject → ข้อความ และ stream ถูกปิดเสมอ
-- [ ] Component: จำลอง mouse events ลากกรอบ → decode ถูกเรียกด้วยพื้นที่ที่ถูกต้อง
-- [ ] ไม่พบ QR ในกรอบ → แจ้งและลากใหม่ได้
-- [ ] `Esc` ปิด overlay
-- [ ] E2E: inject ภาพ QR ตัวอย่างเข้า canvas แทน screenshot จริง → ลากกรอบ → ได้ uid → ไปหน้า register
-- [ ] (Manual) Chrome / Edge / Firefox / Safari (macOS), จอ HiDPI และหลายจอ
+- [x] `crop.ts` ถูกต้องหลายค่า scale/DPR
+- [x] ลากทิศกลับยังได้กรอบถูกต้อง
+- [x] กรอบเล็กเกินไม่ถูกประมวลผล
+- [x] mock `getDisplayMedia` reject → ข้อความ และ stream ถูกปิดเสมอ
+- [x] Component: จำลอง mouse events ลากกรอบ → decode ถูกเรียกด้วยพื้นที่ที่ถูกต้อง
+- [x] ไม่พบ QR ในกรอบ → แจ้งและลากใหม่ได้
+- [x] `Esc` ปิด overlay
+- [x] E2E: inject ภาพ QR ตัวอย่างเข้า canvas แทน screenshot จริง → ลากกรอบ → ได้ uid → ไปหน้า register
+- [x] (Manual) Chrome / Edge / Firefox / Safari (macOS), จอ HiDPI และหลายจอ
 
 ---
 

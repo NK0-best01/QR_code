@@ -28,37 +28,28 @@ function RegisterContent() {
     return null;
   });
 
-  useEffect(() => {
-    let activeUid = uid;
-
+  const [prevParam, setPrevParam] = useState(rawParam);
+  if (rawParam !== prevParam) {
+    setPrevParam(rawParam);
     if (rawParam && rawParam.trim()) {
-      activeUid = decodeURIComponent(rawParam.trim());
-      setUid(activeUid);
+      setUid(decodeURIComponent(rawParam.trim()));
+    }
+  }
+
+  useEffect(() => {
+    if (uid) {
       try {
-        sessionStorage.setItem('register_uid', activeUid);
+        sessionStorage.setItem('register_uid', uid);
       } catch {
         // ignore
       }
-      // Immediately remove ?uid=... from URL bar so the address bar stays clean
-      if (typeof window !== 'undefined') {
+      if (rawParam && typeof window !== 'undefined') {
         window.history.replaceState(null, '', '/register');
       }
-    } else if (!activeUid) {
-      try {
-        const stored = sessionStorage.getItem('register_uid');
-        if (stored && stored.trim()) {
-          activeUid = stored.trim();
-          setUid(activeUid);
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    if (!activeUid) {
+    } else {
       router.replace('/');
     }
-  }, [rawParam, router, uid]);
+  }, [uid, rawParam, router]);
 
   const handleBackHome = () => {
     try {
