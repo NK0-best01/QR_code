@@ -22,7 +22,6 @@ export function ScanPanel({
     isHydrated,
     isButton1Supported,
     unsupportedMessage,
-    toggleMode,
   } = scanModeHook ?? internalHook;
 
   if (!isHydrated) {
@@ -34,7 +33,6 @@ export function ScanPanel({
       >
         <div className="h-12 bg-zinc-200 dark:bg-zinc-700 rounded-xl" />
         <div className="h-12 bg-zinc-200 dark:bg-zinc-700 rounded-xl" />
-        <div className="h-4 w-32 mx-auto bg-zinc-200 dark:bg-zinc-700 rounded" />
       </div>
     );
   }
@@ -140,21 +138,6 @@ export function ScanPanel({
         </svg>
         <span>{messages.scan.manualInput}</span>
       </button>
-
-      {/* Manual Mode Toggle Switch */}
-      <div className="pt-2 text-center">
-        <button
-          type="button"
-          id="btn-toggle-scan-mode"
-          data-testid="btn-toggle-scan-mode"
-          onClick={toggleMode}
-          className="text-xs text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 underline underline-offset-4 cursor-pointer transition-colors"
-        >
-          {isCamera
-            ? 'สลับเป็นโหมดเลือกพื้นที่หน้าจอ (PC)'
-            : 'สลับเป็นโหมดเปิดกล้อง (Mobile)'}
-        </button>
-      </div>
     </div>
   );
 }

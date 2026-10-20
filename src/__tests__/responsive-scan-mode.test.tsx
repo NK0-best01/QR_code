@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { ScanPanel } from '../components/ScanPanel';
 import messages from '../lib/messages';
@@ -217,30 +217,5 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
       messages.scan.cameraNotSupported
     );
   });
-
-  it('ปุ่มสลับโหมดด้วยมือทำงาน', () => {
-    const { mockFn } = createMatchMediaMock({
-      '(max-width: 767px)': false,
-      '(pointer: coarse)': false,
-    });
-    window.matchMedia = mockFn;
-
-    render(<ScanPanel />);
-
-    // Starts in Desktop snip mode
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
-
-    // Click toggle button
-    const toggleBtn = screen.getByTestId('btn-toggle-scan-mode');
-    fireEvent.click(toggleBtn);
-
-    // Switches to Camera mode
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrCamera);
-
-    // Click toggle button again
-    fireEvent.click(toggleBtn);
-
-    // Switches back to Snip mode
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
-  });
 });
+

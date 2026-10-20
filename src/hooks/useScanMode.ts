@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore } from 'react';
 
 export type ScanMode = 'camera' | 'snip';
 
@@ -12,8 +12,6 @@ export interface UseScanModeReturn {
   isScreenSupported: boolean;
   isButton1Supported: boolean;
   unsupportedMessage: string | null;
-  toggleMode: () => void;
-  setMode: (mode: ScanMode) => void;
 }
 
 // Breakpoint md = 768px (PC: >= 768px, Mobile: < 768px)
@@ -66,15 +64,12 @@ function getIsScreenSupported(): boolean {
 }
 
 export function useScanMode(): UseScanModeReturn {
-  const autoMode = useSyncExternalStore(
+  const mode = useSyncExternalStore(
     subscribeMedia,
     getClientAutoMode,
     getServerAutoMode
   );
 
-  const [manualOverride, setManualOverride] = useState<ScanMode | null>(null);
-
-  const mode = manualOverride ?? autoMode;
   const isHydrated = mode !== undefined;
 
   const isCameraSupported = isHydrated ? getIsCameraSupported() : true;
@@ -90,26 +85,13 @@ export function useScanMode(): UseScanModeReturn {
     unsupportedMessage = 'เบราว์เซอร์นี้ไม่รองรับการจับภาพหน้าจอ กรุณาใช้ปุ่มกรอกข้อความแทน';
   }
 
-  const toggleMode = useCallback(() => {
-    setManualOverride((current) => {
-      const active = current ?? getClientAutoMode();
-      return active === 'camera' ? 'snip' : 'camera';
-    });
-  }, []);
-
-  const setMode = useCallback((newMode: ScanMode) => {
-    setManualOverride(newMode);
-  }, []);
-
   return {
     mode,
-    autoMode,
+    autoMode: mode,
     isHydrated,
     isCameraSupported,
     isScreenSupported,
     isButton1Supported,
     unsupportedMessage,
-    toggleMode,
-    setMode,
   };
 }

@@ -50,20 +50,5 @@ test.describe('Phase 2 E2E: Responsive Detection on Home Page', () => {
 
     await context.close();
   });
-
-  test('manual toggle button switches mode on Desktop', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/');
-
-    const scanBtn = page.locator('#btn-scan-qr');
-    await expect(scanBtn).toHaveText(/ลากเมาส์เลือกพื้นที่หน้าจอ/);
-
-    const toggleBtn = page.locator('#btn-toggle-scan-mode');
-    await toggleBtn.click();
-
-    await expect(scanBtn).toHaveText(/เปิดกล้องสแกน QR/);
-
-    await toggleBtn.click();
-    await expect(scanBtn).toHaveText(/ลากเมาส์เลือกพื้นที่หน้าจอ/);
-  });
 });
+
