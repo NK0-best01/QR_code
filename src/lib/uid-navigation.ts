@@ -42,3 +42,33 @@ export function validateUidLocally(rawUid: string): ValidateUidResult {
     trimmedUid: result.data,
   };
 }
+
+export async function processScannedUid(
+  rawUid: string,
+  router: { push: (url: string) => void },
+  options?: {
+    onError?: (msg: string) => void;
+  }
+): Promise<boolean> {
+  const localCheck = validateUidLocally(rawUid);
+  if (!localCheck.isValid || !localCheck.trimmedUid) {
+    options?.onError?.(localCheck.error || messages.manualInput.invalidCharsError);
+    return false;
+  }
+
+  const trimmed = localCheck.trimmedUid;
+  try {
+    const exists = await checkUidExists(trimmed);
+    if (exists) {
+      options?.onError?.(messages.register.uidAlreadyRegistered);
+      return false;
+    }
+
+    router.push(buildRegisterUrl(trimmed));
+    return true;
+  } catch {
+    options?.onError?.(messages.register.unknownError);
+    return false;
+  }
+}
+

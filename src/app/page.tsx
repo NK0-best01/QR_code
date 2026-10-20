@@ -3,10 +3,21 @@
 import React, { useState } from 'react';
 import { ScanPanel } from '@/components/ScanPanel';
 import { ManualInput } from '@/components/ManualInput';
+import { CameraScanner } from '@/components/CameraScanner';
+import { useScanMode } from '@/hooks/useScanMode';
 import messages from '@/lib/messages';
 
 export default function HomePage() {
   const [showManualInput, setShowManualInput] = useState(false);
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const scanModeHook = useScanMode();
+
+  const handleScanClick = () => {
+    if (scanModeHook.mode === 'camera') {
+      setShowCameraScanner(true);
+      setShowManualInput(false);
+    }
+  };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 text-zinc-900 dark:text-zinc-100">
@@ -37,11 +48,23 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Scan Actions Panel or Manual Input Form */}
-        {showManualInput ? (
+        {/* Dynamic Section: Camera Scanner | Manual Input | Scan Panel */}
+        {showCameraScanner ? (
+          <CameraScanner
+            onClose={() => setShowCameraScanner(false)}
+            onSwitchToManual={() => {
+              setShowCameraScanner(false);
+              setShowManualInput(true);
+            }}
+          />
+        ) : showManualInput ? (
           <ManualInput onCancel={() => setShowManualInput(false)} />
         ) : (
-          <ScanPanel onManualClick={() => setShowManualInput(true)} />
+          <ScanPanel
+            scanModeHook={scanModeHook}
+            onScanClick={handleScanClick}
+            onManualClick={() => setShowManualInput(true)}
+          />
         )}
       </div>
     </main>

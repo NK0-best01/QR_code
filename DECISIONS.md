@@ -45,4 +45,15 @@
    - สถานะ 409 (UID ซ้ำ): แสดงข้อความเตือนสีแดง และมีเฉพาะปุ่ม "กลับหน้าแรก" (ไม่แสดงปุ่มลองใหม่)
    - สถานะ 500 หรือเน็ตเวิร์กล่ม: คงข้อมูลที่กรอกไว้ในฟอร์ม และมีปุ่ม "ลองส่งข้อมูลอีกครั้ง"
 
+## Phase 5: ดาวน์โหลด JSON (Skipped)
+- ผู้ใช้สั่งข้าม Phase 5 เนื่องจากมีฐานข้อมูล SQLite และ API จัดเก็บข้อมูลครบถ้วนสมบูรณ์แล้ว ไม่จำเป็นต้องส่งออกเป็นไฟล์ JSON อีก
+
+## Phase 6: สแกน QR ด้วยกล้อง (Mobile)
+1. **jsQR Decoding Helper (`src/lib/qr.ts`):** ถอดรหัส QR จาก `ImageData` หรือ raw buffer โดยใช้ `inversionAttempts: 'attemptBoth'` ทำให้อ่านได้ทั้ง QR โค้ดพื้นขาว-จุดดำ และพื้นดำ-จุดขาว พร้อม trim ข้อความและป้องกันข้อผิดพลาดกรณี buffer ไม่สมบูรณ์
+2. **Throttled Video Loop (`CameraScanner.tsx`):** ใช้ `requestAnimationFrame` ร่วมกับการคำนวณ delta time หน่วงรอบประมวลผลที่ ~150ms เพื่อประหยัดพลังงานแบตเตอรี่และไม่ให้เครื่องมือถือร้อนจากการประมวลผลกราฟิกต่อเนื่อง
+3. **Immediate Track Release & Single-trigger Guard:** ทันทีที่ตรวจพบ QR สำเร็จ สั่ง `track.stop()` ทุก track ของกล้องทันทีและตัดการเชื่อมต่อกล้อง เพื่อดับไฟสถานะกล้องบนอุปกรณ์ พร้อมตั้ง `hasScannedRef.current = true` ป้องกันการยิงคำขอซ้ำจากเฟรมถัดไป
+4. **Context-aware Camera Error Handling:** ตรวจสอบและแสดงข้อความภาษาไทยที่ตรงกับสาเหตุจริง (`NotAllowedError`, `NotFoundError`, `NotReadableError`, Insecure Context) โดยมีปุ่ม "กรอกข้อความเอง" เป็นทางเลือกสำรองเสมอ
+5. **Unified Navigation Pipeline:** ใช้ `processScannedUid` ที่แชร์ร่วมกับ Phase 3 ในการตรวจเช็คความถูกต้องและตรวจ UID ซ้ำผ่าน API ก่อนส่งผู้ใช้ไปหน้า `/register?uid=...` อย่างราบรื่น
+
+
 
