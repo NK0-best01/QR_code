@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { RegisterForm } from '@/components/RegisterForm';
 import messages from '@/lib/messages';
 
 function RegisterContent() {
@@ -49,33 +50,8 @@ function RegisterContent() {
         </button>
       </div>
 
-      {/* UID Readonly Field */}
-      <div className="space-y-1.5">
-        <label
-          htmlFor="display-uid"
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          {messages.register.uidLabel}
-        </label>
-        <input
-          id="display-uid"
-          data-testid="display-uid"
-          type="text"
-          readOnly
-          value={uid}
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 font-mono text-sm cursor-not-allowed select-all focus:outline-none"
-        />
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          * UID ไม่สามารถแก้ไขในหน้านี้ได้ หากต้องการเปลี่ยน กรุณากดย้อนกลับ
-        </p>
-      </div>
-
-      {/* Placeholder container for Phase 4B Form */}
-      <div id="register-form-container" data-testid="register-form-container">
-        <p className="text-sm text-zinc-500 italic text-center py-4">
-          แบบฟอร์มเลือกภาค จังหวัด และประเภทอุปกรณ์ (กำลังโหลด...)
-        </p>
-      </div>
+      {/* Main Registration Form */}
+      <RegisterForm uid={uid} />
     </div>
   );
 }

@@ -49,7 +49,7 @@ test.describe('Phase 3 E2E: Manual Input and Navigation to Register Page', () =>
   });
 
   test('UID ซ้ำ → แสดงข้อความแจ้งเตือน "UID นี้ลงทะเบียนแล้ว" และคงอยู่หน้าแรก', async ({ request, page }) => {
-    const existingUid = 'ALREADY-EXISTS-999';
+    const existingUid = `ALREADY-EXISTS-${Date.now()}`;
 
     // 1. Seed registration into database via API
     const res = await request.post('/api/registrations', {

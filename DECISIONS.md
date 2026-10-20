@@ -36,4 +36,13 @@
 3. **Safe Parameter Encoding & Suspense:** ส่ง UID ผ่าน `encodeURIComponent` ใน URL query param (`/register?uid=...`) รองรับอักขระพิเศษภาษาไทยและสัญลักษณ์ (`& = # %`) พร้อมใช้ `<Suspense>` ครอบ `useSearchParams` เพื่อรองรับ Next.js App Router Client Component
 4. **Fallback Redirection & Back Button:** หากผู้ใช้เข้า `/register` โดยตรงโดยไม่มี param `uid` ระบบจะ redirect กลับหน้าแรกทันที และมีปุ่ม "ย้อนกลับเพื่อแก้ UID" เพื่อให้ผู้ใช้สามารถกลับไปแก้ไข UID ได้อย่างสะดวก
 
+## Phase 4B: หน้าและฟอร์มลงทะเบียน
+1. **Zod 4 Resolver สำหรับ React Hook Form:** เนื่องจาก Zod 4 เปลี่ยนโครงสร้างข้อผิดพลาดจาก `.errors` เป็น `.issues` ทำให้ `@hookform/resolvers/zod` v3 เกิด unhandled rejection ได้ จึงออกแบบ `zod4Resolver` แบบ lightweight ขึ้นมาเอง ซึ่งแปลง `result.error.issues` เป็นโครงสร้างที่ React Hook Form ใช้งานได้สมบูรณ์และไม่มี overhead
+2. **Double Submit Protection:** ใช้ `useRef` ตรวจสอบใน `handleFormSubmit` event handler เพื่อตัดคำขอส่งข้อมูลที่ซ้ำซ้อนในระดับ synchronous ทันทีที่ผู้ใช้กดปุ่มซ้ำ โดยไม่ขัดกับกฎ `react-hooks/refs` ของ React 19
+3. **Cascading Dropdowns (ภาค → จังหวัด):** แสดง 6 ภาคมาตรฐาน เมื่อเลือกภาคจะกรองเฉพาะจังหวัดในภาคนั้น ๆ จากชุดข้อมูล `THAI_REGIONS` และหากผู้ใช้เปลี่ยนภาค จังหวัดที่เลือกไว้จะถูกรีเซ็ตเป็นค่าว่างทันทีเพื่อป้องกันข้อมูลขัดแย้ง
+4. **Device ID Preview & Post-Submit Allocation:** เมื่อเลือกประเภทอุปกรณ์ จะดึงรหัสตัวอย่างจาก `/api/device-types/[code]/next` มาแสดงในช่องตัวอย่างแบบ readOnly และเมื่อกดบันทึกสำเร็จ การ์ดแสดงผลจะยืนยันรหัสจริง (`display-actual-device-id`)
+5. **แยกการจัดการ 409 Conflict และ 500 Error:**
+   - สถานะ 409 (UID ซ้ำ): แสดงข้อความเตือนสีแดง และมีเฉพาะปุ่ม "กลับหน้าแรก" (ไม่แสดงปุ่มลองใหม่)
+   - สถานะ 500 หรือเน็ตเวิร์กล่ม: คงข้อมูลที่กรอกไว้ในฟอร์ม และมีปุ่ม "ลองส่งข้อมูลอีกครั้ง"
+
 
