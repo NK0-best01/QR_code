@@ -64,6 +64,14 @@ export async function processScannedUid(
       return false;
     }
 
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('register_uid', trimmed);
+      } catch {
+        // ignore
+      }
+    }
+
     router.push(buildRegisterUrl(trimmed));
     return true;
   } catch {

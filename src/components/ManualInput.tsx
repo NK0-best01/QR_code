@@ -43,7 +43,15 @@ export function ManualInput({ onCancel, onSuccess }: ManualInputProps) {
         return;
       }
 
-      // 3. Navigate or trigger success
+      // 3. Save to sessionStorage and navigate or trigger success
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem('register_uid', trimmed);
+        } catch {
+          // ignore
+        }
+      }
+
       if (onSuccess) {
         onSuccess(trimmed);
       } else {

@@ -139,6 +139,13 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
       const json = await res.json();
 
       if (res.status === 201) {
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.removeItem('register_uid');
+          } catch {
+            // ignore
+          }
+        }
         setSuccessRecord(json);
         if (onSuccess) {
           onSuccess(json);

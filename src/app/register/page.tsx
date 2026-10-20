@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RegisterForm } from '@/components/RegisterForm';
 import messages from '@/lib/messages';
@@ -8,23 +8,74 @@ import messages from '@/lib/messages';
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawUid = searchParams.get('uid');
+  const rawParam = searchParams.get('uid');
+
+  // Initialize uid from query param or sessionStorage
+  const [uid, setUid] = useState<string | null>(() => {
+    if (rawParam && rawParam.trim()) {
+      return decodeURIComponent(rawParam.trim());
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('register_uid');
+        if (stored && stored.trim()) {
+          return stored.trim();
+        }
+      } catch {
+        // ignore storage access error
+      }
+    }
+    return null;
+  });
 
   useEffect(() => {
-    if (!rawUid || !rawUid.trim()) {
+    let activeUid = uid;
+
+    if (rawParam && rawParam.trim()) {
+      activeUid = decodeURIComponent(rawParam.trim());
+      setUid(activeUid);
+      try {
+        sessionStorage.setItem('register_uid', activeUid);
+      } catch {
+        // ignore
+      }
+      // Immediately remove ?uid=... from URL bar so the address bar stays clean
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/register');
+      }
+    } else if (!activeUid) {
+      try {
+        const stored = sessionStorage.getItem('register_uid');
+        if (stored && stored.trim()) {
+          activeUid = stored.trim();
+          setUid(activeUid);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!activeUid) {
       router.replace('/');
     }
-  }, [rawUid, router]);
+  }, [rawParam, router, uid]);
 
-  if (!rawUid || !rawUid.trim()) {
+  const handleBackHome = () => {
+    try {
+      sessionStorage.removeItem('register_uid');
+    } catch {
+      // ignore
+    }
+    router.push('/');
+  };
+
+  if (!uid) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
   }
-
-  const uid = decodeURIComponent(rawUid.trim());
 
   return (
     <div className="w-full max-w-lg mx-auto p-6 sm:p-8 bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-md space-y-6">
@@ -43,7 +94,7 @@ function RegisterContent() {
           type="button"
           id="btn-back-home"
           data-testid="btn-back-home"
-          onClick={() => router.push('/')}
+          onClick={handleBackHome}
           className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium py-1.5 px-3 rounded-lg border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition cursor-pointer"
         >
           {messages.register.backToChangeUid}
