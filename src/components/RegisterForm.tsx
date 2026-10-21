@@ -354,6 +354,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           value={selectedRegion || ''}
           onChange={handleRegionChange}
           disabled={isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.region}
+          aria-describedby={errors.region ? 'reg-region-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -366,7 +369,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.region && (
-          <p className="text-xs text-red-500">{errors.region.message}</p>
+          <p id="reg-region-error" role="alert" className="text-xs text-red-500">
+            {errors.region.message}
+          </p>
         )}
       </div>
 
@@ -383,6 +388,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           data-testid="reg-province"
           {...register('province')}
           disabled={!selectedRegion || isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.province}
+          aria-describedby={errors.province ? 'reg-province-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 disabled:bg-zinc-100 disabled:dark:bg-zinc-800 disabled:text-zinc-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -397,7 +405,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.province && (
-          <p className="text-xs text-red-500">{errors.province.message}</p>
+          <p id="reg-province-error" role="alert" className="text-xs text-red-500">
+            {errors.province.message}
+          </p>
         )}
       </div>
 
@@ -415,6 +425,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           {...register('deviceType')}
           onChange={handleDeviceTypeChange}
           disabled={isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.deviceType}
+          aria-describedby={errors.deviceType ? 'reg-device-type-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -427,7 +440,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.deviceType && (
-          <p className="text-xs text-red-500">{errors.deviceType.message}</p>
+          <p id="reg-device-type-error" role="alert" className="text-xs text-red-500">
+            {errors.deviceType.message}
+          </p>
         )}
       </div>
 
@@ -441,7 +456,7 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
             {messages.register.deviceIdLabel}
           </label>
           {isLoadingSample && (
-            <span className="text-xs text-zinc-400 animate-pulse">
+            <span role="status" aria-live="polite" className="text-xs text-zinc-400 animate-pulse">
               กำลังดึงเลขตัวอย่าง...
             </span>
           )}
@@ -455,7 +470,7 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           placeholder="-- รอเลือกประเภทอุปกรณ์ --"
           className="w-full px-4 py-2.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 font-mono text-sm text-zinc-600 dark:text-zinc-400 cursor-not-allowed select-all focus:outline-none"
         />
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           * รหัสที่แสดงข้างต้นเป็นเพียงตัวอย่าง รหัสจริงจะถูกกำหนดตอนกดบันทึกข้อมูล
         </p>
       </div>

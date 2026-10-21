@@ -76,3 +76,24 @@
 4. **Immediate Decode & Shared Validation Pipeline:**
    - อ่านภาพและถอดรหัส QR ทันทีด้วย `decodeQrFromImageData` จาก `lib/qr.ts`
    - ตรวจสอบความถูกต้องและ UID ซ้ำผ่าน `processScannedUid` ก่อนส่งต่อไปยังหน้า `/register?uid=...` อย่างเป็นระบบเดียวกันทั้งกล้องและการอัปโหลดภาพ
+
+## Phase 8: Polish, Security & Accessibility
+1. **In-Memory Sliding Window Rate Limiting (`src/lib/rate-limit.ts`):**
+   - ใช้ Sliding Window Algorithm จำลอง Token Bucket บนหน่วยความจำระดับ Process (Ponytail Mindset ไม่เพิ่ม external dependencies)
+   - กำหนดเพดานที่ 30 requests ต่อนาทีต่อ IP สำหรับ `POST /api/registrations`
+   - ส่งคืน Header มาตรฐาน: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` และ `Retry-After` เมื่อเกินขีดจำกัด (HTTP 429) พร้อมระบบ auto-cleanup ข้อมูลที่หมดอายุ
+2. **Payload Size Guard (Anti-DoS):**
+   - ตรวจสอบ `Content-Length` header และความยาวของ Raw Text Stream ก่อน Parse JSON กำหนดขนาดสูงสุดไม่เกิน 64 KB หากเกินจะตอบกลับด้วย HTTP 413 Payload Too Large ทันที เพื่อป้องกัน memory exhaustion attacks
+3. **Hardened HTTP Security Headers (`next.config.ts`):**
+   - `X-Content-Type-Options: nosniff` ป้องกัน MIME-sniffing
+   - `X-Frame-Options: DENY` ป้องกัน Clickjacking
+   - `Referrer-Policy: strict-origin-when-cross-origin`
+   - `Permissions-Policy: camera=(self), display-capture=(self)` ป้องกันการเข้าถึงกล้องและจอจาก iframe/ภายนอก
+4. **WCAG 2.1 AA Accessibility & Color Contrast:**
+   - ตรวจสอบด้วย `@axe-core/playwright` ทั้งหน้าแรกและหน้าลงทะเบียน ไม่พบ violation ระดับ serious หรือ critical ใด ๆ (0 violations)
+   - ปรับ Color Contrast ของ helper text ให้เกิน 4.5:1 ตามเกณฑ์มาตรฐาน
+   - เพิ่ม `aria-required`, `aria-invalid`, `aria-describedby` และ `role="alert"` ให้ข้อความแจ้งเตือนทั้งหมด
+   - เพิ่ม universal `:focus-visible` ring เพื่อให้การนำทางด้วยคีย์บอร์ดชัดเจน โดดเด่น
+5. **Keyboard-Only E2E Navigation:**
+   - มีชุดทดสอบ E2E ยืนยันว่าผู้ใช้สามารถทำครบกระบวนการตั้งแต่เปิดเว็บ -> กรอก UID -> เลือกภาค -> เลือกจังหวัด -> เลือกประเภทอุปกรณ์ -> บันทึกสำเร็จ โดยใช้คีย์บอร์ดเพียงอย่างเดียว (`e2e/a11y-keyboard.spec.ts`)
+

@@ -62,8 +62,16 @@ function RegisterContent() {
 
   if (!uid) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div
+        role="status"
+        aria-label="กำลังโหลดข้อมูล..."
+        className="flex items-center justify-center min-h-[300px]"
+      >
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+          aria-hidden="true"
+        />
+        <span className="sr-only">กำลังโหลดข้อมูล...</span>
       </div>
     );
   }
@@ -103,8 +111,16 @@ export default function RegisterPage() {
     <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 text-zinc-900 dark:text-zinc-100">
       <Suspense
         fallback={
-          <div className="flex items-center justify-center min-h-[300px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div
+            role="status"
+            aria-label="กำลังโหลดข้อมูล..."
+            className="flex items-center justify-center min-h-[300px]"
+          >
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+              aria-hidden="true"
+            />
+            <span className="sr-only">กำลังโหลดข้อมูล...</span>
           </div>
         }
       >

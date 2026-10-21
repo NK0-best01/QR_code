@@ -7,7 +7,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
   });
 
   test('บนหน้าจอ PC: ปุ่มแรกเป็น "ลากเมาส์เลือกพื้นที่หน้าจอ"', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?mode=snip');
 
     const scanBtn = page.locator('#btn-scan-qr');
     await expect(scanBtn).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('/?mode=snip');
     const scanBtn = page.locator('#btn-scan-qr');
     await scanBtn.click();
 
@@ -77,7 +77,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('/?mode=snip');
     await page.locator('#btn-scan-qr').click();
 
     const snipper = page.locator('[data-testid="region-snipper"]');
@@ -114,7 +114,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('/?mode=snip');
     await page.locator('#btn-scan-qr').click();
 
     const snipper = page.locator('[data-testid="region-snipper"]');
@@ -146,7 +146,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('/?mode=snip');
     await page.locator('#btn-scan-qr').click();
 
     const errorCard = page.locator('[data-testid="region-snipper-error"]');
@@ -185,7 +185,7 @@ test.describe('Phase 7 E2E: PC Region Snipper Flow', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('/?mode=snip');
     await page.locator('#btn-scan-qr').click();
 
     const snipperCanvas = page.locator('[data-testid="snipper-canvas"]');

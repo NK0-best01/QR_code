@@ -45,6 +45,10 @@ function getClientAutoMode(): ScanMode {
   if (typeof window === 'undefined' || !window.matchMedia) {
     return 'camera';
   }
+  // Check if explicit mode is requested in URL query (e.g. ?mode=snip)
+  if (window.location && typeof window.location.search === 'string' && window.location.search.includes('mode=snip')) {
+    return 'snip';
+  }
   // แยกตามขนาดหน้าจอ: จอแคบ (< 768px) เป็นมือถือ (กล้อง), จอกว้าง (>= 768px) เป็น PC (upload)
   const isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   return isMobile ? 'camera' : 'upload';
