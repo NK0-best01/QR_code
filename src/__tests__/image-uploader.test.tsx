@@ -80,10 +80,10 @@ describe('Phase 7: Image Uploader QR Scanner Component', () => {
 
   it('processes valid image with customDecoder and redirects to /register?uid=... when UID is new', async () => {
     // Mock /api/uids/KSK-9999/exists -> not existing
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ exists: false }),
-    });
+    } as Response);
 
     const onQrDetected = vi.fn();
     const mockDecoder = vi.fn().mockResolvedValue('KSK-9999');
@@ -136,10 +136,10 @@ describe('Phase 7: Image Uploader QR Scanner Component', () => {
 
   it('shows duplicate error when QR contains already registered UID', async () => {
     // Mock /api/uids/DUP-1234/exists -> exists: true
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ exists: true }),
-    });
+    } as Response);
 
     const mockDecoder = vi.fn().mockResolvedValue('DUP-1234');
 
@@ -161,10 +161,10 @@ describe('Phase 7: Image Uploader QR Scanner Component', () => {
 
   it('handles Drag and Drop events properly', async () => {
     const mockDecoder = vi.fn().mockResolvedValue('DROP-QR-555');
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ exists: false }),
-    });
+    } as Response);
 
     render(<ImageUploader customDecoder={mockDecoder} />);
 
@@ -194,10 +194,10 @@ describe('Phase 7: Image Uploader QR Scanner Component', () => {
 
   it('handles Clipboard Paste (Ctrl + V) event with image', async () => {
     const mockDecoder = vi.fn().mockResolvedValue('CLIPBOARD-UID-888');
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ exists: false }),
-    });
+    } as Response);
 
     render(<ImageUploader customDecoder={mockDecoder} />);
 
@@ -205,15 +205,16 @@ describe('Phase 7: Image Uploader QR Scanner Component', () => {
       type: 'image/png',
     });
 
-    const pasteEvent = new Event('paste') as any;
-    pasteEvent.clipboardData = {
-      items: [
-        {
-          type: 'image/png',
-          getAsFile: () => file,
-        },
-      ],
-    };
+    const pasteEvent = Object.assign(new Event('paste'), {
+      clipboardData: {
+        items: [
+          {
+            type: 'image/png',
+            getAsFile: () => file,
+          },
+        ],
+      },
+    });
 
     act(() => {
       window.dispatchEvent(pasteEvent);
