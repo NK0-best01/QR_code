@@ -11,8 +11,6 @@ const nextConfig: NextConfig = {
             '127.0.0.1:3000',
             '*.local',
       ],
-      cacheComponents: true,
-      partialPrefetching: true,
       turbopack: {
             rules: {
                   "*.css": {
