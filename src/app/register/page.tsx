@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RegisterForm } from '@/components/RegisterForm';
 import messages from '@/lib/messages';
@@ -9,55 +9,23 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawParam = searchParams.get('uid');
-
-  // Initialize uid from query param or sessionStorage
-  const [uid, setUid] = useState<string | null>(() => {
-    if (rawParam && rawParam.trim()) {
-      return decodeURIComponent(rawParam.trim());
-    }
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = sessionStorage.getItem('register_uid');
-        if (stored && stored.trim()) {
-          return stored.trim();
-        }
-      } catch {
-        // ignore storage access error
-      }
-    }
-    return null;
-  });
-
-  const [prevParam, setPrevParam] = useState(rawParam);
-  if (rawParam !== prevParam) {
-    setPrevParam(rawParam);
-    if (rawParam && rawParam.trim()) {
-      setUid(decodeURIComponent(rawParam.trim()));
-    }
-  }
+  const uid = rawParam && rawParam.trim() ? decodeURIComponent(rawParam.trim()) : null;
 
   useEffect(() => {
-    if (uid) {
+    if (!uid) {
+      router.replace('/');
+    }
+  }, [uid, router]);
+
+  const handleBackHome = () => {
+    if (typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem('register_uid', uid);
+        sessionStorage.removeItem('register_uid');
       } catch {
         // ignore
       }
-      if (rawParam && typeof window !== 'undefined') {
-        window.history.replaceState(null, '', '/register');
-      }
-    } else {
-      router.replace('/');
     }
-  }, [uid, rawParam, router]);
-
-  const handleBackHome = () => {
-    try {
-      sessionStorage.removeItem('register_uid');
-    } catch {
-      // ignore
-    }
-    router.push('/');
+    router.replace('/');
   };
 
   if (!uid) {
@@ -100,8 +68,8 @@ function RegisterContent() {
         </button>
       </div>
 
-      {/* Main Registration Form */}
-      <RegisterForm uid={uid} />
+      {/* Main Registration Form with key={uid} to guarantee clean state per UID */}
+      <RegisterForm key={uid} uid={uid} onBackHome={handleBackHome} />
     </div>
   );
 }
