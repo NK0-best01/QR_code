@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useTransition, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -43,9 +43,10 @@ export interface RegistrationRecord {
 interface RegisterFormProps {
   uid: string;
   onSuccess?: (record: RegistrationRecord) => void;
+  onBackHome?: () => void;
 }
 
-export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
+export function RegisterForm({ uid, onSuccess, onBackHome }: RegisterFormProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -58,6 +59,40 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
   const [successRecord, setSuccessRecord] = useState<RegistrationRecord | null>(null);
+  const [countdown, setCountdown] = useState<number>(3);
+
+  // Return to home page cleanly, wiping residual sessionStorage
+  const handleReturnHome = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('register_uid');
+      } catch {
+        // ignore
+      }
+    }
+    if (onBackHome) {
+      onBackHome();
+    } else {
+      router.replace('/');
+    }
+  }, [onBackHome, router]);
+
+  // Auto-redirect countdown on success view
+  useEffect(() => {
+    if (!successRecord) return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
+    const timer = setTimeout(() => {
+      handleReturnHome();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [successRecord, countdown, handleReturnHome]);
 
   const {
     register,
@@ -139,6 +174,13 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
       const json = await res.json();
 
       if (res.status === 201) {
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.removeItem('register_uid');
+          } catch {
+            // ignore
+          }
+        }
         setSuccessRecord(json);
         if (onSuccess) {
           onSuccess(json);
@@ -209,6 +251,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             ระบบได้บันทึกข้อมูลและจองรหัสอุปกรณ์เรียบร้อยแล้ว
           </p>
+          <p className="text-xs font-medium text-blue-600 dark:text-blue-400 pt-1">
+            กำลังกลับสู่หน้าหลักอัตโนมัติใน {countdown} วินาที...
+          </p>
         </div>
 
         <div className="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/80 text-left space-y-2 text-sm">
@@ -245,10 +290,11 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
             type="button"
             id="btn-success-home"
             data-testid="btn-success-home"
-            onClick={() => router.push('/')}
-            className="w-full py-3 px-4 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer"
+            onClick={handleReturnHome}
+            className="w-full py-3 px-4 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer flex items-center justify-center gap-2"
           >
-            {messages.register.backToHome}
+            <span>{messages.register.backToHome}</span>
+            <span className="text-xs opacity-80">({countdown}s)</span>
           </button>
         </div>
       </div>
@@ -347,6 +393,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           value={selectedRegion || ''}
           onChange={handleRegionChange}
           disabled={isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.region}
+          aria-describedby={errors.region ? 'reg-region-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -359,7 +408,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.region && (
-          <p className="text-xs text-red-500">{errors.region.message}</p>
+          <p id="reg-region-error" role="alert" className="text-xs text-red-500">
+            {errors.region.message}
+          </p>
         )}
       </div>
 
@@ -376,6 +427,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           data-testid="reg-province"
           {...register('province')}
           disabled={!selectedRegion || isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.province}
+          aria-describedby={errors.province ? 'reg-province-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 disabled:bg-zinc-100 disabled:dark:bg-zinc-800 disabled:text-zinc-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -390,7 +444,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.province && (
-          <p className="text-xs text-red-500">{errors.province.message}</p>
+          <p id="reg-province-error" role="alert" className="text-xs text-red-500">
+            {errors.province.message}
+          </p>
         )}
       </div>
 
@@ -408,6 +464,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           {...register('deviceType')}
           onChange={handleDeviceTypeChange}
           disabled={isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.deviceType}
+          aria-describedby={errors.deviceType ? 'reg-device-type-error' : undefined}
           className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer text-sm"
         >
           <option value="" disabled>
@@ -420,7 +479,9 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {errors.deviceType && (
-          <p className="text-xs text-red-500">{errors.deviceType.message}</p>
+          <p id="reg-device-type-error" role="alert" className="text-xs text-red-500">
+            {errors.deviceType.message}
+          </p>
         )}
       </div>
 
@@ -434,7 +495,7 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
             {messages.register.deviceIdLabel}
           </label>
           {isLoadingSample && (
-            <span className="text-xs text-zinc-400 animate-pulse">
+            <span role="status" aria-live="polite" className="text-xs text-zinc-400 animate-pulse">
               กำลังดึงเลขตัวอย่าง...
             </span>
           )}
@@ -448,7 +509,7 @@ export function RegisterForm({ uid, onSuccess }: RegisterFormProps) {
           placeholder="-- รอเลือกประเภทอุปกรณ์ --"
           className="w-full px-4 py-2.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 font-mono text-sm text-zinc-600 dark:text-zinc-400 cursor-not-allowed select-all focus:outline-none"
         />
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           * รหัสที่แสดงข้างต้นเป็นเพียงตัวอย่าง รหัสจริงจะถูกกำหนดตอนกดบันทึกข้อมูล
         </p>
       </div>

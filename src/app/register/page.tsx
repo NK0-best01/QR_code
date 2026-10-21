@@ -8,23 +8,41 @@ import messages from '@/lib/messages';
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawUid = searchParams.get('uid');
+  const rawParam = searchParams.get('uid');
+  const uid = rawParam && rawParam.trim() ? decodeURIComponent(rawParam.trim()) : null;
 
   useEffect(() => {
-    if (!rawUid || !rawUid.trim()) {
+    if (!uid) {
       router.replace('/');
     }
-  }, [rawUid, router]);
+  }, [uid, router]);
 
-  if (!rawUid || !rawUid.trim()) {
+  const handleBackHome = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('register_uid');
+      } catch {
+        // ignore
+      }
+    }
+    router.replace('/');
+  };
+
+  if (!uid) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div
+        role="status"
+        aria-label="กำลังโหลดข้อมูล..."
+        className="flex items-center justify-center min-h-[300px]"
+      >
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+          aria-hidden="true"
+        />
+        <span className="sr-only">กำลังโหลดข้อมูล...</span>
       </div>
     );
   }
-
-  const uid = decodeURIComponent(rawUid.trim());
 
   return (
     <div className="w-full max-w-lg mx-auto p-6 sm:p-8 bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-md space-y-6">
@@ -43,15 +61,15 @@ function RegisterContent() {
           type="button"
           id="btn-back-home"
           data-testid="btn-back-home"
-          onClick={() => router.push('/')}
+          onClick={handleBackHome}
           className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium py-1.5 px-3 rounded-lg border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition cursor-pointer"
         >
           {messages.register.backToChangeUid}
         </button>
       </div>
 
-      {/* Main Registration Form */}
-      <RegisterForm uid={uid} />
+      {/* Main Registration Form with key={uid} to guarantee clean state per UID */}
+      <RegisterForm key={uid} uid={uid} onBackHome={handleBackHome} />
     </div>
   );
 }
@@ -61,8 +79,16 @@ export default function RegisterPage() {
     <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 text-zinc-900 dark:text-zinc-100">
       <Suspense
         fallback={
-          <div className="flex items-center justify-center min-h-[300px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div
+            role="status"
+            aria-label="กำลังโหลดข้อมูล..."
+            className="flex items-center justify-center min-h-[300px]"
+          >
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+              aria-hidden="true"
+            />
+            <span className="sr-only">กำลังโหลดข้อมูล...</span>
           </div>
         }
       >
