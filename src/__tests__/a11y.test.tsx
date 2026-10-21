@@ -67,10 +67,10 @@ describe('Phase 8: Accessibility (A11y) & Keyboard Navigation Tests', () => {
 
   describe('ManualInput Keyboard & A11y', () => {
     it('input has autofocus and pressing Enter submits the form', async () => {
-      (global.fetch as any) = vi.fn().mockResolvedValueOnce({
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => ({ exists: false }),
-      });
+      } as Response);
 
       const handleSuccess = vi.fn();
       render(<ManualInput onSuccess={handleSuccess} />);
