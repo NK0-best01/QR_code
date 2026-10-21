@@ -4,12 +4,21 @@ import { prisma, ensurePrismaSqliteConfig } from '../lib/db';
 import { POST as registerHandler } from '../app/api/registrations/route';
 import { GET as existsHandler } from '../app/api/uids/[uid]/exists/route';
 import { GET as nextHandler } from '../app/api/device-types/[code]/next/route';
+import { resetRateLimitStore } from '../lib/rate-limit';
+import messages from '../lib/messages';
 
-function createJsonRequest(url: string, body: unknown): NextRequest {
+function createJsonRequest(
+  url: string,
+  body: unknown,
+  options?: { headers?: Record<string, string> }
+): NextRequest {
   return new NextRequest(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'content-type': 'application/json',
+      ...(options?.headers || {}),
+    },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
   });
 }
 
@@ -19,6 +28,7 @@ describe('Phase 4A: API Route Handlers Tests', () => {
   });
 
   beforeEach(async () => {
+    resetRateLimitStore();
     await prisma.registration.deleteMany();
     await prisma.deviceCounter.deleteMany();
   });
@@ -234,6 +244,80 @@ describe('Phase 4A: API Route Handlers Tests', () => {
       });
       expect(res2.status).toBe(200);
       expect((await res2.json()).exists).toBe(true);
+    });
+  });
+
+  describe('Phase 8: Security & Rate Limiting Tests', () => {
+    it('uid ที่ยาวเกิน 128 ตัวอักษร ถูกปฏิเสธ → 400 Validation failed', async () => {
+      const longUid = 'A'.repeat(129);
+      const req = createJsonRequest('http://localhost:3000/api/registrations', {
+        uid: longUid,
+        region: 'เหนือ',
+        province: 'เชียงใหม่',
+        deviceType: 'KSK',
+      });
+      const res = await registerHandler(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe('Validation failed');
+    });
+
+    it('Request body ขนาดเกิน 64KB ถูกปฏิเสธ → 413 Payload Too Large', async () => {
+      // Create body payload larger than 64KB
+      const hugeData = 'x'.repeat(65 * 1024);
+      const req = createJsonRequest(
+        'http://localhost:3000/api/registrations',
+        hugeData,
+        {
+          headers: { 'content-length': String(65 * 1024) },
+        }
+      );
+
+      const res = await registerHandler(req);
+      expect(res.status).toBe(413);
+      const json = await res.json();
+      expect(json.error).toBe(messages.api.payloadTooLarge);
+    });
+
+    it('ยิงคำขอเกิน Rate Limit (30 reqs) → 429 Too Many Requests พร้อม headers Retry-After', async () => {
+      const clientIp = '192.168.1.100';
+
+      // Send 30 valid requests
+      for (let i = 1; i <= 30; i++) {
+        const req = createJsonRequest(
+          'http://localhost:3000/api/registrations',
+          {
+            uid: `RATE-LIMIT-UID-${i}`,
+            region: 'กลาง',
+            province: 'กรุงเทพมหานคร',
+            deviceType: 'KSK',
+          },
+          { headers: { 'x-forwarded-for': clientIp } }
+        );
+        const res = await registerHandler(req);
+        expect(res.status).toBe(201);
+      }
+
+      // The 31st request from same IP must be rate limited
+      const blockedReq = createJsonRequest(
+        'http://localhost:3000/api/registrations',
+        {
+          uid: 'RATE-LIMIT-UID-BLOCKED',
+          region: 'กลาง',
+          province: 'กรุงเทพมหานคร',
+          deviceType: 'KSK',
+        },
+        { headers: { 'x-forwarded-for': clientIp } }
+      );
+      const blockedRes = await registerHandler(blockedReq);
+
+      expect(blockedRes.status).toBe(429);
+      expect(blockedRes.headers.get('Retry-After')).toBeTruthy();
+      expect(blockedRes.headers.get('X-RateLimit-Limit')).toBe('30');
+      expect(blockedRes.headers.get('X-RateLimit-Remaining')).toBe('0');
+
+      const json = await blockedRes.json();
+      expect(json.error).toBe(messages.api.rateLimitExceeded);
     });
   });
 });

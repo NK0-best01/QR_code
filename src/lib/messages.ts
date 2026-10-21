@@ -71,6 +71,11 @@ export const messages = {
     deviceTypeRequired: 'กรุณาเลือกประเภทอุปกรณ์',
     provinceNotInRegion: 'จังหวัดที่เลือกไม่อยู่ในภาคที่ระบุ',
   },
+  api: {
+    rateLimitExceeded: 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง',
+    payloadTooLarge: 'ขนาดข้อมูลมีขนาดใหญ่เกินกว่าที่กำหนด (สูงสุด 64KB)',
+    invalidJson: 'รูปแบบข้อมูล JSON ไม่ถูกต้อง',
+  },
 } as const;
 
 export default messages;

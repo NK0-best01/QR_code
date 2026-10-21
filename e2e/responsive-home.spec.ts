@@ -15,7 +15,7 @@ test.describe('Phase 2 E2E: Responsive Detection on Home Page', () => {
 
     const scanBtn = page.locator('#btn-scan-qr');
     await expect(scanBtn).toBeVisible();
-    await expect(scanBtn).toHaveText(/ลากเมาส์เลือกพื้นที่หน้าจอ/);
+    await expect(scanBtn).toHaveText(/อัปโหลดภาพ QR จากโฟลเดอร์/);
 
     const manualBtn = page.locator('#btn-manual-input');
     await expect(manualBtn).toBeVisible();

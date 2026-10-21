@@ -482,12 +482,13 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - ข้อความ fallback เมื่อเบราว์เซอร์ไม่รองรับ `getDisplayMedia` / `getUserMedia`
 
 **Tests**
-- [ ] Lighthouse Accessibility ≥ 90
-- [ ] `@axe-core/playwright` ไม่พบ violation ระดับ serious/critical
-- [ ] E2E: ใช้คีย์บอร์ดอย่างเดียวทำครบตั้งแต่กรอก text → บันทึก
-- [ ] uid ที่ยาวเกินกำหนดถูกปฏิเสธ
-- [ ] เกิน rate limit → 429
-- [ ] เบราว์เซอร์ไม่รองรับ API → เห็นข้อความ fallback ไม่ crash
+- [x] Lighthouse Accessibility ≥ 90
+- [x] `@axe-core/playwright` ไม่พบ violation ระดับ serious/critical (WCAG 2.1 AA ผ่านทั้งหน้าแรกและหน้า register)
+- [x] E2E: ใช้คีย์บอร์ดอย่างเดียวทำครบตั้งแต่กรอก text → บันทึก (`e2e/a11y-keyboard.spec.ts`)
+- [x] uid ที่ยาวเกินกำหนด (> 128 ตัวอักษร) ถูกปฏิเสธด้วย 400 Validation failed
+- [x] เกิน rate limit (> 30 req/min ต่อ IP) → 429 Too Many Requests พร้อม headers `Retry-After`
+- [x] Request Body ขนาดเกิน 64KB ถูกปฏิเสธด้วย 413 Payload Too Large
+- [x] เบราว์เซอร์ไม่รองรับ API → เห็นข้อความ fallback ไม่ crash
 
 ---
 
