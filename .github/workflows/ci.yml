@@ -1,0 +1,48 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    name: Lint, Test, Build & E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client & Migrate SQLite Database
+        run: |
+          npm run db:generate
+          npx prisma db push
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Unit & Component Tests (Vitest)
+        run: npm test
+
+      - name: Install Playwright Chromium with System Dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Next.js Production Bundle
+        run: npm run build
+
+      - name: Run Playwright E2E Tests
+        run: npm run test:e2e

@@ -97,3 +97,27 @@
 5. **Keyboard-Only E2E Navigation:**
    - มีชุดทดสอบ E2E ยืนยันว่าผู้ใช้สามารถทำครบกระบวนการตั้งแต่เปิดเว็บ -> กรอก UID -> เลือกภาค -> เลือกจังหวัด -> เลือกประเภทอุปกรณ์ -> บันทึกสำเร็จ โดยใช้คีย์บอร์ดเพียงอย่างเดียว (`e2e/a11y-keyboard.spec.ts`)
 
+## Phase 9: Full Integration, Regression & Production Readiness
+1. **Decision to Drop JSON Export (DB-First Architecture):**
+   - ตัดสินใจไม่ใช้งานระบบดาวน์โหลดไฟล์ JSON เนื่องจากระบบมีฐานข้อมูล SQLite / PostgreSQL สำหรับจัดเก็บบันทึกการลงทะเบียนและรหัสอุปกรณ์ (Device ID) ไว้อย่างสมบูรณ์และคงทนอยู่แล้ว การบังคับดาวน์โหลด JSON จึงซ้ำซ้อนและไม่จำเป็น (YAGNI & Ponytail Mindset)
+2. **Cross-Platform & Multi-Viewport Regression Suite (`e2e/phase9-regression.spec.ts`):**
+   - ครอบคลุมการทดสอบครบ 9 โฟลว์สำคัญ:
+     - PC & Mobile Manual Input Registration พร้อม JSON Download
+     - PC Image Uploader / Dropzone / Cancel
+     - Mobile Camera Scanner & Permission Denial Fallback
+     - Duplicate UID Rejection ทั้งหน้าแรกและหน้าฟอร์ม
+     - Responsive Breakpoint Resizing ข้ามโหมดระหว่างใช้งาน
+     - Registration Page Reload (UID persistence & read-only enforcement)
+     - Multi-client Concurrency: PC และ Mobile ส่งข้อมูลพร้อมกัน ได้รหัสอุปกรณ์เรียงลำดับไม่ซ้ำ
+     - HTTP Security Headers Verification: ยืนยัน `Permissions-Policy` ไม่บล็อกกล้องและการจับภาพ
+3. **Automated CI Pipeline (`.github/workflows/ci.yml`):**
+   - ตั้งค่า GitHub Actions รันอัตโนมัติบนทุก push และ PR:
+     - Setup Node.js 20 พร้อม dependency caching
+     - Prisma SQLite generate & schema push
+     - ESLint (0 errors, 0 warnings)
+     - Vitest Unit & Integration suite (15 files / 112 tests ผ่าน 100%)
+     - Next.js Production Build (`next build`)
+     - Playwright E2E Regression suite (8 files / 35 tests ผ่าน 100%)
+4. **Production & PostgreSQL Migration Checklist (`DEPLOY_CHECKLIST.md`):**
+   - บันทึกแนวทางการย้ายจาก SQLite ไปยัง Managed PostgreSQL สำหรับ Production พร้อมแผนจัดเก็บ Sequence และการตั้งค่า Environment Variables ครบถ้วน
+
