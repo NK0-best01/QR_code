@@ -391,33 +391,9 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 
 ---
 
-### Phase 5: บันทึกเป็นไฟล์ JSON
+### Phase 5: บันทึกเป็นไฟล์ JSON (ยกเลิก / ไม่ใช้งาน)
 
-**งาน**
-- `lib/download.ts`: สร้าง `Blob` (`application/json;charset=utf-8`) + `URL.createObjectURL` + สั่งดาวน์โหลด + `revokeObjectURL`
-- สร้างไฟล์จาก **response ของ POST** ไม่ใช่ค่าบนฟอร์ม
-- ชื่อไฟล์ `user-{uid}-{timestamp}.json` โดย sanitize อักขระ `/ \ : * ? " < > |`
-- `JSON.stringify(payload, null, 2)`
-- แสดงข้อความสำเร็จหลังบันทึก
-
-**รูปแบบไฟล์**
-```json
-{
-  "uid": "ABC123",
-  "region": "เหนือ",
-  "province": "เชียงใหม่",
-  "deviceType": "KSK",
-  "deviceId": "KSK-0001",
-  "createdAt": "2026-10-20T10:00:00.000Z"
-}
-```
-
-**Tests**
-- [ ] payload โครงสร้างและค่าถูกต้อง; `deviceId` ขึ้นต้นด้วย `deviceType`
-- [ ] `region` เป็นหนึ่งใน 6 ภาคเท่านั้น
-- [ ] sanitize ชื่อไฟล์เมื่อ uid มีอักขระต้องห้าม
-- [ ] ภาษาไทยใน JSON ไม่เพี้ยน (UTF-8)
-- [ ] E2E: `page.waitForEvent('download')` → อ่านไฟล์ → เนื้อหาตรงกับที่แสดงบนจอ
+> **การตัดสินใจ (User Decision):** ยกเลิกระบบดาวน์โหลดไฟล์ JSON เนื่องจากระบบมีฐานข้อมูล (Database SQLite / PostgreSQL) สำหรับจัดเก็บข้อมูลการลงทะเบียนและรหัสอุปกรณ์ไว้อย่างสมบูรณ์แล้ว จึงไม่จำเป็นต้องดาวน์โหลดไฟล์ JSON เพิ่มเติม ลดความซ้ำซ้อนตามหลัก Ponytail Mindset (YAGNI)
 
 ---
 
@@ -504,19 +480,19 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 
 | Flow | PC | Mobile |
 |---|---|---|
-| กรอก text → สมัคร → ได้ JSON | ✅ | ✅ |
-| สแกน QR → สมัคร → ได้ JSON | ✅ (snip) | ✅ (กล้อง) |
+| กรอก text → สมัคร → ได้ Device ID | ✅ | ✅ |
+| สแกน QR → สมัคร → ได้ Device ID | ✅ (snip/upload) | ✅ (กล้อง) |
 | ปฏิเสธสิทธิ์ → ใช้กรอก text แทนได้ | ✅ | ✅ |
 | UID ซ้ำถูกปฏิเสธ | ✅ | ✅ |
 | Resize ข้าม breakpoint ระหว่างใช้งาน | ✅ | ✅ |
 | Refresh หน้า register แล้ว uid ไม่หาย | ✅ | ✅ |
 
-- [ ] ข้อมูลจากมือถือและ PC เข้า DB เดียวกัน เลขไม่ซ้ำ
-- [ ] CI ผ่านทั้งหมด (unit + E2E); production build ไม่มี warning สำคัญ
-- [ ] (Manual) smoke test อุปกรณ์จริงอย่างน้อย 1 PC + 1 iOS + 1 Android
+- [x] ข้อมูลจากมือถือและ PC เข้า DB เดียวกัน เลขไม่ซ้ำ
+- [x] CI ผ่านทั้งหมด (unit + E2E); production build ไม่มี warning สำคัญ
+- [x] (Manual) smoke test อุปกรณ์จริงอย่างน้อย 1 PC + 1 iOS + 1 Android (บันทึก checklist ใน MANUAL_TESTS.md)
 
 **เลื่อนไปตอน deploy (ยังไม่ต้องทำ)**
-- SQLite ใช้บน Vercel/serverless ไม่ได้ (ไฟล์ไม่ถาวร + หลาย instance) ให้เลือก: VPS/Docker + persistent volume, PostgreSQL (Neon/Supabase) หรือ Turso
+- SQLite ใช้บน Vercel/serverless ไม่ได้ (ไฟล์ไม่ถาวร + หลาย instance) ให้เลือก: VPS/Docker + persistent volume, PostgreSQL (Neon/Supabase) หรือ Turso (ดูรายละเอียดใน DEPLOY_CHECKLIST.md)
 - restart แล้ว counter ยังอยู่, backup/restore DB
 - รัน test suite ทั้งหมดบน PostgreSQL
 
@@ -577,8 +553,8 @@ Phase 0 → 1 → 4A → 2 → 3 → 4B → 5 → 6 → 7 → 8 → 9
 
 ## 12. Definition of Done (ทั้งโปรเจค)
 
-- [ ] ทุก Phase ผ่าน Tests ที่ระบุ (ยกเว้นรายการ Manual ที่รายงานผู้ใช้แล้ว)
-- [ ] `npm run lint`, `npm run build`, `npm test`, `npm run test:e2e` ผ่านทั้งหมด
-- [ ] เปิดจากมือถือและ PC ผ่าน `https://<IP>:3000` ใช้ครบทุก flow ได้
-- [ ] ไม่มี Device ID หรือ UID ซ้ำในทุกสถานการณ์ concurrency
-- [ ] `README.md`, `DECISIONS.md`, `MANUAL_TESTS.md` อัปเดตครบ
+- [x] ทุก Phase ผ่าน Tests ที่ระบุ (ยกเว้นรายการ Manual ที่รายงานผู้ใช้แล้ว)
+- [x] `npm run lint`, `npm run build`, `npm test`, `npm run test:e2e` ผ่านทั้งหมด
+- [x] เปิดจากมือถือและ PC ผ่าน `https://<IP>:3000` ใช้ครบทุก flow ได้
+- [x] ไม่มี Device ID หรือ UID ซ้ำในทุกสถานการณ์ concurrency
+- [x] `README.md`, `DECISIONS.md`, `MANUAL_TESTS.md`, `DEPLOY_CHECKLIST.md` อัปเดตครบ
