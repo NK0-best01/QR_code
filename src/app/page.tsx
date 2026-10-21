@@ -5,6 +5,7 @@ import { ScanPanel } from '@/components/ScanPanel';
 import { ManualInput } from '@/components/ManualInput';
 import { CameraScanner } from '@/components/CameraScanner';
 import { RegionSnipper } from '@/components/RegionSnipper';
+import { ImageUploader } from '@/components/ImageUploader';
 import { useScanMode } from '@/hooks/useScanMode';
 import messages from '@/lib/messages';
 
@@ -12,6 +13,7 @@ export default function HomePage() {
   const [showManualInput, setShowManualInput] = useState(false);
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [showRegionSnipper, setShowRegionSnipper] = useState(false);
+  const [showImageUploader, setShowImageUploader] = useState(false);
   const scanModeHook = useScanMode();
 
   const handleScanClick = () => {
@@ -19,10 +21,18 @@ export default function HomePage() {
       setShowCameraScanner(true);
       setShowManualInput(false);
       setShowRegionSnipper(false);
+      setShowImageUploader(false);
     } else if (scanModeHook.mode === 'snip') {
       setShowRegionSnipper(true);
       setShowManualInput(false);
       setShowCameraScanner(false);
+      setShowImageUploader(false);
+    } else {
+      // mode === 'upload' (default on PC/Desktop)
+      setShowImageUploader(true);
+      setShowManualInput(false);
+      setShowCameraScanner(false);
+      setShowRegionSnipper(false);
     }
   };
 
@@ -55,12 +65,20 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Dynamic Section: Camera Scanner | Region Snipper | Manual Input | Scan Panel */}
+        {/* Dynamic Section: Camera Scanner | Image Uploader | Region Snipper | Manual Input | Scan Panel */}
         {showCameraScanner ? (
           <CameraScanner
             onClose={() => setShowCameraScanner(false)}
             onSwitchToManual={() => {
               setShowCameraScanner(false);
+              setShowManualInput(true);
+            }}
+          />
+        ) : showImageUploader ? (
+          <ImageUploader
+            onClose={() => setShowImageUploader(false)}
+            onSwitchToManual={() => {
+              setShowImageUploader(false);
               setShowManualInput(true);
             }}
           />

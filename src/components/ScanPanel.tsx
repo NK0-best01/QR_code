@@ -40,14 +40,16 @@ export function ScanPanel({
   const isCamera = mode === 'camera';
   const button1Text = isCamera
     ? messages.scan.scanQrCamera
-    : messages.scan.scanQrScreen;
+    : mode === 'snip'
+    ? messages.scan.scanQrScreen
+    : messages.scan.scanQrUpload;
 
   return (
     <div
       data-testid="scan-panel"
       className="w-full max-w-md mx-auto p-6 bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-md space-y-4"
     >
-      {/* Primary Action: QR Scan (Camera or Screen Snipper) */}
+      {/* Primary Action: QR Scan (Camera, Screen Snipper, or Image Upload) */}
       <div className="space-y-2">
         <button
           type="button"
@@ -95,7 +97,7 @@ export function ScanPanel({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
               />
             </svg>
           )}

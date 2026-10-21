@@ -62,6 +62,17 @@
 4. **HiDPI / Scaling Precision:** แปลงพิกัดการแสดงผลหน้าจอไปยังพิกัดภาพธรรมชาติด้วยอัตราส่วน `naturalWidth / displayWidth` และ `naturalHeight / displayHeight` รองรับทั้งจอมาตรฐานและจอ Retina/HiDPI
 5. **Interactive Fullscreen Overlay:** มีหน้าต่างมาร์กเกอร์สีมืดครอบหน้าจอ พร้อมแสดงภาพจริงที่ถูกครอบอย่างคมชัด มีมุมไกด์สีขาวและเส้นขอบสีฟ้า พร้อมรองรับปุ่ม `Esc` เพื่อยกเลิก และหากเลือกพื้นที่ที่ไม่พบ QR จะมีแจ้งเตือนสีเหลืองและอนุญาตให้ลากครอบใหม่ได้ทันทีโดยไม่ต้องเปิด screen capture ใหม่
 
-
-
-
+## Phase 7: อัปโหลดภาพ QR จากโฟลเดอร์บน PC (`ImageUploader.tsx`) — ปรับปรุงจาก Region Screenshot
+1. **Pivot from Browser Screen Snip (`getDisplayMedia`) to Local Image Upload:**
+   - จากผลการทดสอบการใช้งานจริงบนเบราว์เซอร์ พบว่า `getDisplayMedia` ติดข้อจำกัดด้านความปลอดภัยของ Web Sandbox โดยเบราว์เซอร์จะบังคับแสดงหน้าต่างขอแชร์หน้าจอ ("Choose what to share") เสมอ ซึ่งส่งผลต่อความคุ้นชินของผู้ใช้ที่ต้องการประสบการณ์แบบ Snipping Tool แท้ ๆ
+   - จึงปรับปรุงการสแกน QR บน PC เป็นการเปิดให้ผู้ใช้เลือกไฟล์ภาพ QR Code ที่บันทึกไว้ในเครื่อง/โฟลเดอร์ หรือลากไฟล์ภาพมาวาง (Drag & Drop) หรือกดวางภาพจากคลิปบอร์ด (`Ctrl + V`) ซึ่งทำงานได้รวดเร็ว ปลอดภัย และไม่ติด security prompt ใด ๆ ของเบราว์เซอร์
+2. **Nothing is Deleted Rule:**
+   - โค้ด `RegionSnipper.tsx` และ `lib/crop.ts` รวมถึงชุดทดสอบเดิมยังคงถูกเก็บรักษาไว้ใน codebase และคงความพร้อมใช้งานได้ 100%
+3. **Triple Input Method Support (File Picker + Drag & Drop + Clipboard Paste):**
+   - ออกแบบ `ImageUploader.tsx` ให้มี:
+     1. ปุ่มเลือกไฟล์ภาพจากโฟลเดอร์ในเครื่อง (`<input type="file" accept="image/*">`)
+     2. Drag & Drop Zone ที่ตอบสนองต่อการลากไฟล์ภาพมาปล่อย
+     3. Global Clipboard Paste Listener (`window.addEventListener('paste', ...)`) ดึงภาพที่แคปไว้ใน Clipboard ทันทีที่กด `Ctrl + V`
+4. **Immediate Decode & Shared Validation Pipeline:**
+   - อ่านภาพและถอดรหัส QR ทันทีด้วย `decodeQrFromImageData` จาก `lib/qr.ts`
+   - ตรวจสอบความถูกต้องและ UID ซ้ำผ่าน `processScannedUid` ก่อนส่งต่อไปยังหน้า `/register?uid=...` อย่างเป็นระบบเดียวกันทั้งกล้องและการอัปโหลดภาพ

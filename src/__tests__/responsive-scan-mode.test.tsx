@@ -90,7 +90,7 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
     vi.restoreAllMocks();
   });
 
-  it('mock matchMedia: 1024px (Desktop) แสดงปุ่ม Snip (ลากเมาส์เลือกพื้นที่หน้าจอ)', () => {
+  it('mock matchMedia: 1024px (Desktop) แสดงปุ่มอัปโหลด (อัปโหลดภาพ QR จากโฟลเดอร์)', () => {
     const { mockFn } = createMatchMediaMock({
       '(max-width: 767px)': false,
       '(pointer: coarse)': false,
@@ -100,7 +100,7 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
     render(<ScanPanel />);
 
     const scanBtn = screen.getByTestId('btn-scan-qr');
-    expect(scanBtn).toHaveTextContent(messages.scan.scanQrScreen);
+    expect(scanBtn).toHaveTextContent(messages.scan.scanQrUpload);
     expect(scanBtn).not.toBeDisabled();
     expect(screen.getByTestId('btn-manual-input')).toHaveTextContent(messages.scan.manualInput);
   });
@@ -119,14 +119,14 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
     expect(scanBtn).not.toBeDisabled();
   });
 
-  it('แยก PC vs Mobile ตามขนาดหน้าจอ: จอกว้าง (>= 768px) เป็น PC (Snip), จอแคบ (< 768px) เป็น Mobile (กล้อง)', () => {
+  it('แยก PC vs Mobile ตามขนาดหน้าจอ: จอกว้าง (>= 768px) เป็น PC (Upload), จอแคบ (< 768px) เป็น Mobile (กล้อง)', () => {
     // 1. PC: จอกว้าง
     const { mockFn: mockPc } = createMatchMediaMock({
       '(max-width: 767px)': false,
     });
     window.matchMedia = mockPc;
     const { unmount } = render(<ScanPanel />);
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrUpload);
     unmount();
 
     // 2. Mobile: จอแคบ
@@ -147,8 +147,8 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
 
     render(<ScanPanel />);
 
-    // Initially desktop snip
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+    // Initially desktop upload
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrUpload);
 
     // Simulate resizing to mobile width
     act(() => {
@@ -163,30 +163,28 @@ describe('Phase 2: Responsive Detection + Layout หน้าแรก (ScanPane
       setMatches('(max-width: 767px)', false);
     });
 
-    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrScreen);
+    expect(screen.getByTestId('btn-scan-qr')).toHaveTextContent(messages.scan.scanQrUpload);
   });
 
-  it('ไม่มี getDisplayMedia → ปุ่ม Snip ใช้ไม่ได้ + แสดงข้อความเตือน', () => {
-    const { mockFn } = createMatchMediaMock({
-      '(max-width: 767px)': false,
-      '(pointer: coarse)': false,
-    });
-    window.matchMedia = mockFn;
-
-    // Simulate lack of getDisplayMedia
-    Object.defineProperty(navigator, 'mediaDevices', {
-      value: {
-        getUserMedia: vi.fn(),
-        getDisplayMedia: undefined,
-      },
-      writable: true,
-      configurable: true,
-    });
-
-    render(<ScanPanel />);
+  it('โหมด snip ที่ไม่มี getDisplayMedia → ปุ่ม Snip ใช้ไม่ได้ + แสดงข้อความเตือน', () => {
+    render(
+      <ScanPanel
+        scanModeHook={{
+          mode: 'snip',
+          autoMode: 'snip',
+          isHydrated: true,
+          isCameraSupported: true,
+          isScreenSupported: false,
+          isUploadSupported: true,
+          isButton1Supported: false,
+          unsupportedMessage: messages.scan.screenNotSupported,
+        }}
+      />
+    );
 
     const scanBtn = screen.getByTestId('btn-scan-qr');
     expect(scanBtn).toBeDisabled();
+    expect(scanBtn).toHaveTextContent(messages.scan.scanQrScreen);
     expect(screen.getByTestId('unsupported-warning')).toHaveTextContent(
       messages.scan.screenNotSupported
     );

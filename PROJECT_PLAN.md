@@ -439,26 +439,35 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 
 ---
 
-### Phase 7: Region Screenshot สแกน QR (PC) — **เสี่ยงสุด**
+### Phase 7: อัปโหลดภาพ QR จากโฟลเดอร์ (PC Image Upload Scanner) — ปรับปรุงจาก Region Screenshot
+
+**บริบทการปรับปรุง (Pivot from Screen Snip to Image Upload):**
+- เดิมใน Phase 7 ใช้ `RegionSnipper` ผ่าน `getDisplayMedia` แต่เบราว์เซอร์บังคับถาม "Choose what to share" ทุกครั้งเพื่อความปลอดภัยของ Web Sandbox ทำให้ UX ไม่ลื่นไหลเหมือน Native Snipping Tool
+- จึงปรับปรุงระบบบน PC ให้เป็นการ **อัปโหลดภาพ QR Code จากโฟลเดอร์ในเครื่อง (File Picker)** ควบคู่กับ **Drag & Drop** และ **Clipboard Paste (`Ctrl + V`)**
+- โค้ด `RegionSnipper.tsx` และ `lib/crop.ts` เดิมยังคงเก็บรักษาไว้ใน codebase ตามหลักการ "Nothing is Deleted"
 
 **งาน**
-- `RegionSnipper`: `getDisplayMedia` → วาดเฟรมเดียวลง canvas → **หยุด stream ทันที** (ใน `finally` เสมอ)
-- overlay เต็มจอแสดงภาพ, ลากเมาส์วาดกรอบ (mousedown/move/up), พื้นที่นอกกรอบเป็นสีมืด
-- `lib/crop.ts`: แปลงพิกัดบนหน้าจอ → พิกัดภาพจริง โดยคูณ `naturalWidth / displayWidth` (และคำนึงถึง `devicePixelRatio`)
-- crop แล้ว decode ด้วย `lib/qr.ts`; ไม่พบ QR → แจ้งและให้ลากใหม่ได้
-- รองรับ `Esc` ยกเลิก; ลากทิศกลับ (ขวาล่าง→ซ้ายบน) ต้องได้กรอบถูกต้อง; กรอบเล็กกว่า 10px ให้ข้าม
-- เมื่อสำเร็จ → เช็ค UID ซ้ำ → ส่งต่อหน้า register
+- `ImageUploader.tsx`: กล่องรับไฟล์ภาพ QR รองรับ:
+  1. คลิกปุ่ม "อัปโหลดภาพ QR จากโฟลเดอร์" หรือคลิกกล่องเพื่อเปิดหน้าต่างเลือกไฟล์ภาพจากโฟลเดอร์ในเครื่อง (`<input type="file" accept="image/*">`)
+  2. ลากรูปภาพมาวาง (Drag & Drop)
+  3. ดักจับ Clipboard Paste (`Ctrl + V`) เมื่อผู้ใช้แคปหน้าจอด้วย `Win + Shift + S` แล้ววาง
+- แปลงไฟล์ภาพลง canvas และ decode QR ทันทีด้วย `decodeQrFromImageData` จาก `lib/qr.ts`
+- หากพบ QR → ตรวจสอบรูปแบบ UID และตรวจ UID ซ้ำผ่าน `processScannedUid` → ส่งต่อไปยัง `/register?uid=...`
+- หากไม่พบ QR ในภาพ → แสดง alert เตือนภาษาไทย พร้อมปุ่มเลือกภาพใหม่ หรือสลับไปกรอกข้อความเอง
+- หากเลือกไฟล์ที่ไม่ใช่รูปภาพ → แสดง alert แจ้งเตือนประเภทไฟล์
+- รองรับปุ่ม `Esc` หรือปุ่มยกเลิกเพื่อปิดกล่องอัปโหลดกลับสู่หน้าแรก
 
 **Tests**
-- [x] `crop.ts` ถูกต้องหลายค่า scale/DPR
-- [x] ลากทิศกลับยังได้กรอบถูกต้อง
-- [x] กรอบเล็กเกินไม่ถูกประมวลผล
-- [x] mock `getDisplayMedia` reject → ข้อความ และ stream ถูกปิดเสมอ
-- [x] Component: จำลอง mouse events ลากกรอบ → decode ถูกเรียกด้วยพื้นที่ที่ถูกต้อง
-- [x] ไม่พบ QR ในกรอบ → แจ้งและลากใหม่ได้
-- [x] `Esc` ปิด overlay
-- [x] E2E: inject ภาพ QR ตัวอย่างเข้า canvas แทน screenshot จริง → ลากกรอบ → ได้ uid → ไปหน้า register
-- [x] (Manual) Chrome / Edge / Firefox / Safari (macOS), จอ HiDPI และหลายจอ
+- [x] `image-uploader.test.tsx`: แสดงหน้าจอเริ่มต้น, dropzone, ปุ่มเลือกไฟล์, ปุ่มยกเลิก, และ fallback สลับไปกรอกข้อความ
+- [x] เลือกไฟล์ภาพที่มี QR โค้ด → ถอดรหัสสำเร็จ → ตรวจ UID → navigate ไป `/register?uid=...`
+- [x] เลือกไฟล์ภาพที่ไม่พบ QR โค้ด → แสดง error alert `qrNotFoundInImage` พร้อมปุ่มเลือกรูปใหม่
+- [x] เลือกไฟล์ที่ไม่ใช่รูปภาพ (เช่น PDF/TXT) → แสดง error alert `invalidImageType`
+- [x] สแกนพบ UID ที่เคยลงทะเบียนแล้ว → แสดง error `uidAlreadyRegistered`
+- [x] ลากไฟล์ภาพมาวาง (Drag & Drop) → แสดงสถานะ dropzone และ decode สำเร็จ
+- [x] กดวางภาพจากคลิปบอร์ด (`Ctrl + V`) → ดึงไฟล์ภาพและ decode สำเร็จ
+- [x] กด `Esc` หรือปุ่มยกเลิก → ปิด uploader
+- [x] `responsive-scan-mode.test.tsx`: บน Desktop แสดงปุ่ม "อัปโหลดภาพ QR จากโฟลเดอร์"
+- [x] โค้ด Region Screenshot เดิม (`crop.test.ts`, `region-snipper.test.tsx`) ยังคงผ่านครบ 100%
 
 ---
 
