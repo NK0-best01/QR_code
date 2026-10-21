@@ -364,6 +364,13 @@ export function ImageUploader({
         </div>
       )}
 
+      {/* Selected File Name */}
+      {fileName && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono text-center truncate px-2">
+          {fileName}
+        </p>
+      )}
+
       {/* Success State */}
       {successUid && (
         <div
