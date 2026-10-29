@@ -137,5 +137,66 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 3: Phase 12 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
+## Part 3: Phase 12 — Login Page & Route Protection (Proxy / Middleware)
+- **Branch:** `auth-login`
+- **สถานะ:** ✅ สำเร็จสมบูรณ์ (Completed) — 2026-10-29
+
+### 1. สิ่งที่ทำ (Actions Taken)
+1. **Branch Management:** แตก branch ใหม่ `auth-login` จาก `auth-session`
+2. **Next.js 16 Proxy Convention (`src/proxy.ts` & `src/lib/auth/middleware-logic.ts`):**
+   - พัฒนา pure logic `evaluateAuthMiddleware` ให้ทดสอบได้โดยไม่ต้องรันเซิร์ฟเวอร์
+   - ใช้งาน `src/proxy.ts` (Next.js 16 standard proxy convention)
+   - กำหนด `config.matcher` ครอบคลุมเฉพาะ `['/dashboard', '/dashboard/:path*', '/admin', '/admin/:path*', '/login']`
+   - **Isolation Rule สำเร็จ 100%:** หน้า `/`, `/register`, และ API สาธารณะ ไม่อยู่ใน matcher โดยสิ้นเชิง และไม่มีการแตะโค้ดเดิมของหน้าแรก
+3. **UI Components & Pages:**
+   - `src/components/LoginForm.tsx`:
+     - พัฒนาด้วย React Hook Form + Zod
+     - Input `username` (`autoComplete="username"`) และ `password` (`type="password"`, `autoComplete="current-password"`)
+     - **ไม่มี Checkbox "จดจำฉัน"** ตามข้อกำหนดเด็ดขาดของผู้ใช้
+     - ปุ่ม submit แสดงสถานะกำลังส่ง (`disabled` พร้อม spinner และข้อความ "กำลังเข้าสู่ระบบ...")
+     - Error banner แสดงด้วย `role="alert"` ถูกต้องตามมาตรฐาน Accessibility
+   - `src/app/login/page.tsx`: Server Component ตรวจสอบ session หากมี session อยู่แล้วจะ redirect ไป `/dashboard` หรือ target path ทันที
+   - `src/app/(portal)/layout.tsx`: Portal layout ตรวจสอบ session ซ้ำฝั่ง Server (Defense-in-depth)
+   - `src/app/(portal)/dashboard/page.tsx`: หน้าแดชบอร์ด placeholder พร้อมปุ่มออกจากระบบและแสดง role ผู้ใช้
+   - `src/app/(portal)/admin/page.tsx`: Redirect ไป `/dashboard` เสมอ
+   - `src/app/(portal)/admin/map/page.tsx`: Admin map placeholder พร้อม Server-side role check ซ้ำ (กัน user เข้า)
+   - `src/app/api/auth/logout/route.ts`: รองรับทั้ง standard HTML Form submit (303 See Other redirect ไป `/login`) และ AJAX Fetch (200 JSON) พร้อมเคลียร์ cookie
+4. **Testing Infrastructure & E2E Helpers:**
+   - `e2e/helpers/auth.ts`: Helper สำหรับ login ทาง UI (`loginViaUi`) และการตั้ง cookie session จำลอง (`setAuthCookie`)
+   - `src/__tests__/auth-login-flow.test.tsx`: 14 unit & component tests สำหรับ matcher, middleware logic และ LoginForm UI
+   - `e2e/auth-route-guards.spec.ts`: 10 Playwright E2E tests สำหรับ route protection, public route isolation, role enforcement, open redirect protection, และ logout flow
+
+### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
+1. **Next.js 16 Middleware Deprecation Warning:**
+   - *Error:* `The "middleware" file convention is deprecated. Please use "proxy" instead.`
+   - *สาเหตุ:* Next.js 16 แนะนำให้เปลี่ยนชื่อ convention จาก `middleware.ts` เป็น `proxy.ts`
+2. **Zod v4 Parameter Compatibility:**
+   - *Error:* `Object literal may only specify known properties, and 'required_error' does not exist in type '$ZodStringParams'.` ใน `login/route.ts`, `LoginForm.tsx`, และ `roles.ts`
+   - *สาเหตุ:* Zod v4 เปลี่ยน signature ไม่รับ `required_error` และ `errorMap` ในลักษณะเดิม
+3. **TypeScript Readonly `process.env.NODE_ENV`:**
+   - *Error:* `Cannot assign to 'NODE_ENV' because it is a read-only property.` ใน `auth-user.test.ts` ระหว่าง `next build`
+4. **HTML Form Logout Response Type:**
+   - *Error:* เมื่อกดปุ่ม logout ที่เป็น standard `<form action="/api/auth/logout" method="POST">` browser ค้างอยู่ที่หน้า JSON แทนที่จะ redirect
+   - *สาเหตุ:* Endpoint เดิมตอบเฉพาะ `NextResponse.json` ไม่ได้ส่ง HTTP redirect 303 สำหรับ browser form navigation
+5. **Cross-Realm CryptoKey ใน Vitest UI Tests:**
+   - *Error:* เมื่อรัน UI test ร่วมกับ `signSession` ใน jsdom พบข้อความ `TypeError: Received an instance of Uint8Array`
+
+### 3. วิธีการแก้ไข (Solutions & Fixes)
+1. ปรับมาใช้ `src/proxy.ts` แทน `src/middleware.ts` ตามมาตรฐาน Next.js 16 พร้อมคง export ฟังก์ชัน `middleware` และ `proxy` ไว้เพื่อ backward compatibility
+2. ปรับ Zod schema ให้เข้ากันได้กับ Zod v4: ใช้ `z.string().min(1, messages.auth.usernameRequired)` และ `z.enum(["admin", "user"], { message: ... })`
+3. Cast `(process.env as Record<string, string | undefined>).NODE_ENV = 'production'` ใน test
+4. ตรวจสอบ header `accept.includes("text/html")` ใน `POST /api/auth/logout`: หากเป็น Form POST จากเบราว์เซอร์ ให้ redirect 303 ไปที่ `/login` พร้อมส่ง Set-Cookie ล้าง session
+5. อัปเกรด `src/lib/auth/session.ts` ให้ใช้ `crypto.subtle.importKey` (`CryptoKey`) ซึ่งทำงานได้สมบูรณ์แบบข้ามทุกสภาพแวดล้อม (Node.js, Edge, Browser, และ Vitest jsdom)
+
+### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
+- **Unit & Integration Tests (`npm test`):** ผ่าน **17 test files / 153 tests (100% Passed)**
+- **Playwright E2E Tests (`npm run test:e2e`):** ผ่าน **46/46 tests (100% Passed)** รวมถึง 10 tests ใหม่ของ Phase 12
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% ไร้ warning ไร้ type error
+- **Lint Check (`npm run lint`):** ผ่าน **0 errors, 0 warnings**
+- ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
+
+---
+*(Part 4: Phase 13 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
 

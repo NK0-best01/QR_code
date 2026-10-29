@@ -8,6 +8,7 @@ import { RegionSnipper } from '@/components/RegionSnipper';
 import { ImageUploader } from '@/components/ImageUploader';
 import { useScanMode } from '@/hooks/useScanMode';
 import messages from '@/lib/messages';
+import Link from 'next/link';
 
 export default function HomePage() {
   const [showManualInput, setShowManualInput] = useState(false);
@@ -37,7 +38,32 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 text-zinc-900 dark:text-zinc-100">
+    <main className="min-h-screen relative flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 text-zinc-900 dark:text-zinc-100">
+      {/* Top-Right Staff Login Link */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <Link
+          href="/login"
+          id="link-staff-login"
+          data-testid="link-staff-login"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-600 dark:text-zinc-400 bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 shadow-xs hover:shadow transition"
+        >
+          <svg
+            className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+            />
+          </svg>
+          <span>เข้าสู่ระบบเจ้าหน้าที่</span>
+        </Link>
+      </div>
+
       <div className="w-full max-w-md space-y-6 text-center">
         {/* Header Section */}
         <div className="space-y-2">

@@ -7,6 +7,8 @@ import { safeNextPath, homePathForRole } from "@/lib/auth/guards";
 import { checkRateLimit, getClientIdentifier } from "@/lib/rate-limit";
 import { messages } from "@/lib/messages";
 
+import { isValidRole, type Role } from "@/data/roles";
+
 const MAX_BODY_BYTES = 64 * 1024; // 64 KB limit
 const LOGIN_RATE_LIMIT = 10; // 10 attempts per minute per IP
 const LOGIN_WINDOW_MS = 60_000;
@@ -16,12 +18,12 @@ const DUMMY_BCRYPT_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZd
 
 const loginSchema = z.object({
   username: z
-    .string({ required_error: messages.auth.usernameRequired })
+    .string()
     .trim()
     .min(1, messages.auth.usernameRequired)
     .max(128),
   password: z
-    .string({ required_error: messages.auth.passwordRequired })
+    .string()
     .min(1, messages.auth.passwordRequired)
     .max(128),
   next: z.string().optional(),
@@ -99,9 +101,7 @@ export async function POST(request: NextRequest) {
   const parseResult = loginSchema.safeParse(rawBody);
   if (!parseResult.success) {
     const firstError =
-      parseResult.error.issues?.[0]?.message ||
-      parseResult.error.errors?.[0]?.message ||
-      messages.auth.invalidCredentials;
+      parseResult.error.issues?.[0]?.message || messages.auth.invalidCredentials;
     return NextResponse.json(
       { error: firstError },
       { status: 400, headers: rateLimitHeaders }
@@ -128,21 +128,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const userRole: Role = isValidRole(user.role) ? user.role : "user";
+
   // 7. Sign Session JWT (24h)
   const token = await signSession({
     sub: String(user.id),
     username: user.username,
-    role: user.role,
+    role: userRole,
   });
 
   const setCookieHeader = buildSetCookieHeader(token);
-  const defaultHome = homePathForRole(user.role);
+  const defaultHome = homePathForRole(userRole);
   const targetNext = safeNextPath(next, defaultHome);
 
   const response = NextResponse.json(
     {
       success: true,
-      role: user.role,
+      role: userRole,
       username: user.username,
       redirectTo: targetNext,
     },

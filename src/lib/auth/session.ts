@@ -19,10 +19,38 @@ export function getAuthSecret(): Uint8Array {
 }
 
 /**
+ * Returns a CryptoKey for HS256 signing and verification.
+ * Works seamlessly across Node.js, Next.js Edge, Browsers, and Vitest jsdom realms.
+ */
+export async function getAuthKey(): Promise<CryptoKey | Uint8Array> {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error("AUTH_SECRET is not set or is shorter than 32 characters!");
+  }
+
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    try {
+      const raw = new TextEncoder().encode(secret);
+      return await crypto.subtle.importKey(
+        "raw",
+        raw,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign", "verify"]
+      );
+    } catch {
+      // Fallback to Uint8Array if WebCrypto is unavailable
+    }
+  }
+
+  return new TextEncoder().encode(secret);
+}
+
+/**
  * Signs a new JWT session with 24 hours expiration.
  */
 export async function signSession(payload: { sub: string; username: string; role: Role }): Promise<string> {
-  const secret = getAuthSecret();
+  const key = await getAuthKey();
   return new SignJWT({
     username: payload.username,
     role: payload.role,
@@ -31,7 +59,7 @@ export async function signSession(payload: { sub: string; username: string; role
     .setSubject(String(payload.sub))
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
-    .sign(secret);
+    .sign(key);
 }
 
 /**
@@ -44,8 +72,8 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   }
 
   try {
-    const secret = getAuthSecret();
-    const { payload } = await jwtVerify(token, secret, {
+    const key = await getAuthKey();
+    const { payload } = await jwtVerify(token, key, {
       algorithms: ["HS256"],
     });
 

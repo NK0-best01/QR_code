@@ -99,12 +99,12 @@ describe("Phase 10: User Model, Password Hashing & Seed", () => {
 
     it("seed ใน NODE_ENV=production → ปฏิเสธ ไม่เขียน DB", async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV = "production";
 
       try {
         await expect(seedUsers()).rejects.toThrow("Refusing to seed database in production environment!");
       } finally {
-        process.env.NODE_ENV = originalEnv;
+        (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
       }
     });
 

@@ -331,20 +331,20 @@ e2e/helpers/auth.ts                     # login helper + storageState ต่อ 
 - E2E helper `e2e/helpers/auth.ts`: login ผ่าน API เก็บ `storageState` ต่อ role
 
 **Tests**
-- [ ] E2E: เข้า `/` และ `/register?uid=ABC` **โดยไม่ login → ใช้งานได้ ไม่ถูก redirect**
-- [ ] E2E: เข้า `/` ขณะมี cookie `session` เสีย/หมดอายุ/ปลอม → ยังใช้งานได้ปกติ ไม่ถูกลบ cookie ไม่ redirect
-- [ ] Unit: `matcher` ของ proxy **ไม่ match** `/`, `/register`, `/api/uids/x/exists`, `/api/device-types/KSK/next`, `/api/registrations` (POST สาธารณะ) และ **match** `/dashboard`, `/admin`, `/admin/map`, `/login`
-- [ ] E2E: เข้า `/dashboard` โดยไม่ login → `/login?next=%2Fdashboard`
-- [ ] E2E: เข้า `/admin/map` โดยไม่ login → `/login`
-- [ ] E2E: login `admin1/1234` → `/dashboard`; login `user1/1234` → `/dashboard`
-- [ ] E2E: login รหัสผิด → เห็นข้อความ error ยังอยู่หน้า login
-- [ ] E2E: user ที่ login แล้วพิมพ์ `/admin/map` → ถูกส่งไป `/dashboard`
-- [ ] E2E: admin เข้า `/admin/map` ได้
-- [ ] E2E: login อยู่แล้วเข้า `/login` → ไป `/dashboard`
-- [ ] E2E: logout แล้วเข้า `/dashboard` → `/login`
-- [ ] E2E: `/login?next=//evil.com` login สำเร็จ → ไม่ออกนอกโดเมน
-- [ ] Unit: `LoginForm` ปุ่ม disabled ตอนส่ง, ส่งซ้ำไม่ได้, error ใช้ `role="alert"`
-- [ ] **Regression: test ชุดเดิม (106 unit + 35 E2E) ผ่านครบ โดยไม่ต้อง login และไม่แก้หน้า `/`**
+- [x] E2E: เข้า `/` และ `/register?uid=ABC` **โดยไม่ login → ใช้งานได้ ไม่ถูก redirect**
+- [x] E2E: เข้า `/` ขณะมี cookie `session` เสีย/หมดอายุ/ปลอม → ยังใช้งานได้ปกติ ไม่ถูกลบ cookie ไม่ redirect
+- [x] Unit: `matcher` ของ proxy **ไม่ match** `/`, `/register`, `/api/uids/x/exists`, `/api/device-types/KSK/next`, `/api/registrations` (POST สาธารณะ) และ **match** `/dashboard`, `/admin`, `/admin/map`, `/login`
+- [x] E2E: เข้า `/dashboard` โดยไม่ login → `/login?next=%2Fdashboard`
+- [x] E2E: เข้า `/admin/map` โดยไม่ login → `/login`
+- [x] E2E: login `admin1/1234` → `/dashboard`; login `user1/1234` → `/dashboard`
+- [x] E2E: login รหัสผิด → เห็นข้อความ error ยังอยู่หน้า login
+- [x] E2E: user ที่ login แล้วพิมพ์ `/admin/map` → ถูกส่งไป `/dashboard`
+- [x] E2E: admin เข้า `/admin/map` ได้
+- [x] E2E: login อยู่แล้วเข้า `/login` → ไป `/dashboard`
+- [x] E2E: logout แล้วเข้า `/dashboard` → `/login`
+- [x] E2E: `/login?next=//evil.com` login สำเร็จ → ไม่ออกนอกโดเมน
+- [x] Unit: `LoginForm` ปุ่ม disabled ตอนส่ง, ส่งซ้ำไม่ได้, error ใช้ `role="alert"`
+- [x] **Regression: test ชุดเดิม (106 unit + 35 E2E) ผ่านครบ โดยไม่ต้อง login และไม่แก้หน้า `/`**
 
 ---
 
