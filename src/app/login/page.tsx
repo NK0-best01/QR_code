@@ -56,10 +56,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <LoginForm nextDestination={nextParam} />
 
         {/* Footer Link */}
-        <div className="pt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+        <div className="pt-2 text-center text-xs text-zinc-600 dark:text-zinc-400">
           <Link
             href="/"
-            className="hover:text-blue-600 dark:hover:text-blue-400 underline transition"
+            className="text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 underline transition font-medium"
           >
             ← กลับสู่หน้าหลักการสแกน QR Code
           </Link>

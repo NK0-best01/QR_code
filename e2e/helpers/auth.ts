@@ -1,4 +1,14 @@
 import { Page, BrowserContext } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
+
+if (!process.env.AUTH_SECRET) {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(envPath);
+  }
+}
+
 import { signSession } from '../../src/lib/auth/session';
 
 export async function loginViaUi(

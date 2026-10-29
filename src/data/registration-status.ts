@@ -9,7 +9,14 @@ export const registrationStatusSchema = z.enum(["UNREGISTERED", "REGISTERED"], {
 
 export const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   UNREGISTERED: "ยังไม่ลงทะเบียน",
-  REGISTERED: "ลงทะเบียนแล้ว",
+  REGISTERED: "ลงทะเบียน",
+};
+
+export const REGISTRATION_STATUS_BADGES: Record<RegistrationStatus, string> = {
+  UNREGISTERED:
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60",
+  REGISTERED:
+    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60",
 };
 
 export const REGISTRATION_STATUS_BADGE_CLASSES: Record<

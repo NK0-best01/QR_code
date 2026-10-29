@@ -323,4 +323,72 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 6: Phase 15 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
+## Part 6: Phase 15 — Portal Layout, Sidebar, and Dashboard
+- **Branch:** `dashboard`
+- **สถานะ:** ✅ สำเร็จสมบูรณ์ (Completed) — 2026-10-29
+
+### 1. สิ่งที่ทำ (Actions Taken)
+1. **Branch Management:** แตก branch ใหม่ `dashboard` จาก `registration-status`
+2. **Google Maps Helper (`src/lib/google-maps.ts`):**
+   - พัฒนาฟังก์ชัน `buildGoogleMapsUrl(latitude, longitude)` สร้าง URL `https://www.google.com/maps/search/?api=1&query=<lat>,<lng>`
+   - ป้องกันค่าที่ไม่ใช่ finite number (โยน TypeError)
+   - Unit tests ครอบคลุมพิกัดปกติ, ค่าลบ, ค่าศูนย์, และ validation
+3. **Portal Layout & Responsive Sidebar (`src/components/PortalSidebar.tsx`, `src/app/(portal)/layout.tsx`):**
+   - ปรับ `PortalLayout` รองรับ Grid responsive layout (Desktop มี Sidebar ซ้ายมือความกว้าง `w-64`, Mobile มี Header Bar ด้านบน)
+   - `PortalSidebar` ตรวจสอบ Role อย่างเข้มงวด:
+     - `user`: แสดงเฉพาะเมนู "แดชบอร์ด" (ไม่มีลิงก์ "แผนที่" ปรากฏใน DOM เด็ดขาด)
+     - `admin`: แสดงทั้งเมนู "แดชบอร์ด" และ "แผนที่" (`/admin/map`)
+     - มีลิงก์กลับหน้าสาธารณะ "ไปหน้าสแกน QR" (`/`)
+     - แสดงชื่อผู้ใช้, ป้ายบทบาท, และปุ่ม "ออกจากระบบ" (`#btn-logout`)
+     - รองรับคีย์บอร์ดและ Accessibility: `aria-current="page"`, Mobile drawer ปิดด้วย `Esc`, `aria-expanded` สลับสถานะถูกต้อง
+4. **Status Filter Buttons (`src/components/StatusFilterButtons.tsx`):**
+   - ปุ่มกรองสถานะ 2 ปุ่ม: "ยังไม่ลงทะเบียน (N)" และ "ลงทะเบียน (N)"
+   - ใช้งาน `aria-pressed`: เริ่มต้นเป็น `false` ทั้ง 2 ปุ่ม (แสดงทุกสถานะ)
+   - กดปุ่ม = กรองสถานะนั้น (`aria-pressed="true"`), กดซ้ำ = กลับไปแสดงทั้งหมด
+   - ตัวเลขบนปุ่มเชื่อมโยงกับ `counts` ของ API โดยตรง
+5. **Registration Card Component (`src/components/RegistrationCard.tsx`):**
+   - แสดงข้อมูลอุปกรณ์ครบถ้วน: Device ID, UID, ประเภทอุปกรณ์, ภาค, จังหวัด, วันที่ลงทะเบียน
+   - ป้ายสถานะเป็นข้อความเสมอ (ไม่พึ่งพาแค่สี) ตามมาตรฐานการเข้าถึง
+   - ส่วนพิกัดหมุด:
+     - มี pin: แสดงพิกัด + ลิงก์ "เปิดใน Google Maps" (`target="_blank"`, `rel="noopener noreferrer"`) + หากเป็น admin จะมีปุ่ม "แก้ไข pin"
+     - ไม่มี pin: แสดง "ยังไม่มี pin" + หากเป็น admin จะมีปุ่ม "เพิ่ม pin" + หากเป็น user จะแสดง "รอผู้ดูแลเพิ่ม pin" (ไม่มีปุ่ม)
+6. **Dashboard Client & Page (`src/components/DashboardClient.tsx`, `src/app/(portal)/dashboard/page.tsx`):**
+   - ครอบด้วย React `Suspense` boundary เพื่อรองรับ `useSearchParams`
+   - จัดการ State: Loading, Error (พร้อมปุ่ม "ลองใหม่อีกครั้ง"), และ Empty ("ไม่มีข้อมูล")
+   - จัดวาง Grid แสดงการ์ด 12 รายการต่อหน้า พร้อมระบบแบ่งหน้า (Previous / Next / Page Indicator)
+   - เชื่อมโยง URL search parameter `?status=` และ `?page=`
+   - ปฏิบัติตามมาตรฐาน Read-Only ของ Dashboard (ไม่มี mutation เกิดขึ้นในหน้านี้)
+7. **Comprehensive Test Suite:**
+   - Unit & Component tests (`src/__tests__/portal-dashboard-components.test.tsx`): 10 tests ครอบคลุม Sidebar role isolation, Mobile drawer, StatusFilterButtons, RegistrationCard, และ DashboardClient states
+   - E2E tests (`e2e/dashboard-flow.spec.ts`): 5 scenarios ครอบคลุม User flow, Admin flow, Public registration to dashboard integration, Mobile 390x844 responsive, และ Axe Accessibility WCAG 2.1 AA
+
+### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
+1. **TypeScript Literal Infer ใน `navItems`:**
+   - *Error:* `Type '"แผนที่"' is not assignable to type '"แดชบอร์ด"'`
+   - *สาเหตุ:* `navItems` ถูก TypeScript infer ชนิดข้อมูลจากไอเทมแรกที่ใช้ข้อความ `messages.portal.dashboard` (as const)
+2. **Playwright E2E Helper ขาด `process.env.AUTH_SECRET`:**
+   - *Error:* `AUTH_SECRET is not set or is shorter than 32 characters!` เมื่อเรียก `setAuthCookie` ใน Playwright
+   - *สาเหตุ:* Playwright test runner ทำงานแยก Process และไม่ได้โหลด `.env` อัตโนมัติ
+3. **WCAG 2.1 AA Color Contrast Violation (Axe Core):**
+   - *Error:* Contrast ratio 2.62 ต่ำกว่าเกณฑ์ 4.5:1 บนข้อความ footer ของ `/login` และ label รหัสอุปกรณ์/ยังไม่มี pin ของการ์ด
+   - *สาเหตุ:* ใช้สี `text-zinc-400` บนพื้นหลังสีขาว `#ffffff`
+4. **React 19 `react-hooks/set-state-in-effect` Linter Error:**
+   - *Error:* `Calling setState synchronously within an effect can trigger cascading renders`
+   - *สาเหตุ:* ฟังก์ชัน `fetchData` เรียก `setLoading(true)` ในทันทีแบบ synchronous เมื่อ `useEffect` ทำงาน
+
+### 3. วิธีการแก้ไข (Solutions & Fixes)
+1. กำหนด interface `NavItem` ที่มี `label: string` ให้กับอาเรย์ `navItems: NavItem[]` อย่างชัดเจน
+2. เพิ่ม `process.loadEnvFile()` ใน `e2e/helpers/auth.ts` เมื่อตรวจพบว่าไม่มี `AUTH_SECRET`
+3. ปรับสีฟอนต์เป็น `text-zinc-600 dark:text-zinc-400` และ `text-zinc-700` ทำให้มี Contrast Ratio เกิน 4.5:1 (ผ่านเกณฑ์ WCAG AA 100%)
+4. ปรับโครงสร้าง Effect ใน `DashboardClient.tsx` ให้ใช้ async loader pattern และอัปเดต State เมื่อ Promise สำเร็จหรือล้มเหลวแบบ asynchronous
+
+### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
+- **Unit & Integration Tests (`npm test`):** ผ่าน **21 test files / 195 tests (100% Passed)**
+- **Playwright E2E Tests (`npx playwright test`):** ผ่าน **51 tests (100% Passed)**
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% รัน SSG และ Route Manifest ครบทุกหน้า
+- **Lint Check (`npm run lint`):** ผ่าน **0 errors, 0 warnings**
+- ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
+
+---
+*(Part 7: Phase 16 จะถูกบันทึกต่อในหัวข้อถัดไป)*

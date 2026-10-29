@@ -435,19 +435,19 @@ e2e/helpers/auth.ts                     # login helper + storageState ต่อ 
 - ข้อความใหม่ทั้งหมดใส่ `messages.ts`
 
 **Tests**
-- [ ] Unit `PortalSidebar`: user เห็นเฉพาะ "แดชบอร์ด" (ไม่มี "แผนที่" ใน DOM) / admin เห็นทั้งสอง
-- [ ] Unit: จอแคบ → ปุ่มเมนูเปิด/ปิด, `Esc` ปิด, `aria-expanded` ถูกต้อง
-- [ ] Unit `StatusFilterButtons`: แสดงชื่อ+จำนวนถูกต้อง, เริ่มต้นไม่มีปุ่มใด `aria-pressed="true"`, กดแล้วกรอง, กดซ้ำแล้วกลับเป็นทั้งหมด
-- [ ] Unit `RegistrationCard`: UNREGISTERED ไม่มี pin → "ยังไม่มี pin" + admin เห็น "เพิ่ม pin" (user ไม่เห็น); REGISTERED → พิกัด + ลิงก์ Google Maps ที่ `href` ถูก (`target="_blank"`, `rel` มี `noopener noreferrer`) + admin เห็น "แก้ไข pin" (user ไม่เห็น); ป้ายสถานะเป็นข้อความเสมอ
-- [ ] Unit: loading/error/empty states, แบ่งหน้าถูกต้อง
-- [ ] E2E (user): `/dashboard` เห็นแค่เมนูแดชบอร์ด; เปิดมาเห็น **ทั้ง 2 สถานะปนกัน** และการ์ดใหม่สุดอยู่บนสุด
-- [ ] E2E (user): สมัครข้อมูลใหม่ทางหน้า `/` (ไม่ login) แล้วกลับมา Dashboard → การ์ดใหม่อยู่บนสุดสถานะ "ยังไม่ลงทะเบียน" และตัวเลขบนปุ่มเพิ่มขึ้น 1
-- [ ] E2E (user): กดปุ่ม "ลงทะเบียน" → เห็นเฉพาะสถานะนั้น จำนวนบนปุ่มตรงกับจำนวนการ์ดทั้งหมดของสถานะ; กดซ้ำ → กลับเป็นทั้งหมด
-- [ ] E2E (user): ไม่เห็นปุ่ม "เพิ่ม/แก้ไข pin" และเข้า `/admin/map` ไม่ได้
-- [ ] E2E (admin): เห็นเมนูแดชบอร์ด + แผนที่, การ์ด UNREGISTERED มี "เพิ่ม pin", การ์ด REGISTERED มี "แก้ไข pin"
-- [ ] E2E: viewport 390×844 → sidebar ซ่อนตอนเริ่ม เปิดได้ด้วยปุ่ม, หน้าไม่เลื่อนแนวนอน
-- [ ] axe: `/dashboard` และ `/login` ไม่พบ violation ระดับ serious/critical (WCAG 2.1 AA)
-- [ ] ใช้คีย์บอร์ดอย่างเดียวเข้าถึงเมนู/ปุ่มกรอง/การ์ดได้ครบ
+- [x] Unit `PortalSidebar`: user เห็นเฉพาะ "แดชบอร์ด" (ไม่มี "แผนที่" ใน DOM) / admin เห็นทั้งสอง
+- [x] Unit: จอแคบ → ปุ่มเมนูเปิด/ปิด, `Esc` ปิด, `aria-expanded` ถูกต้อง
+- [x] Unit `StatusFilterButtons`: แสดงชื่อ+จำนวนถูกต้อง, เริ่มต้นไม่มีปุ่มใด `aria-pressed="true"`, กดแล้วกรอง, กดซ้ำแล้วกลับเป็นทั้งหมด
+- [x] Unit `RegistrationCard`: UNREGISTERED ไม่มี pin → "ยังไม่มี pin" + admin เห็น "เพิ่ม pin" (user ไม่เห็น); REGISTERED → พิกัด + ลิงก์ Google Maps ที่ `href` ถูก (`target="_blank"`, `rel` มี `noopener noreferrer`) + admin เห็น "แก้ไข pin" (user ไม่เห็น); ป้ายสถานะเป็นข้อความเสมอ
+- [x] Unit: loading/error/empty states, แบ่งหน้าถูกต้อง
+- [x] E2E (user): `/dashboard` เห็นแค่เมนูแดชบอร์ด; เปิดมาเห็น **ทั้ง 2 สถานะปนกัน** และการ์ดใหม่สุดอยู่บนสุด
+- [x] E2E (user): สมัครข้อมูลใหม่ทางหน้า `/` (ไม่ login) แล้วกลับมา Dashboard → การ์ดใหม่อยู่บนสุดสถานะ "ยังไม่ลงทะเบียน" และตัวเลขบนปุ่มเพิ่มขึ้น 1
+- [x] E2E (user): กดปุ่ม "ลงทะเบียน" → เห็นเฉพาะสถานะนั้น จำนวนบนปุ่มตรงกับจำนวนการ์ดทั้งหมดของสถานะ; กดซ้ำ → กลับเป็นทั้งหมด
+- [x] E2E (user): ไม่เห็นปุ่ม "เพิ่ม/แก้ไข pin" และเข้า `/admin/map` ไม่ได้
+- [x] E2E (admin): เห็นเมนูแดชบอร์ด + แผนที่, การ์ด UNREGISTERED มี "เพิ่ม pin", การ์ด REGISTERED มี "แก้ไข pin"
+- [x] E2E: viewport 390×844 → sidebar ซ่อนตอนเริ่ม เปิดได้ด้วยปุ่ม, หน้าไม่เลื่อนแนวนอน
+- [x] axe: `/dashboard` และ `/login` ไม่พบ violation ระดับ serious/critical (WCAG 2.1 AA)
+- [x] ใช้คีย์บอร์ดอย่างเดียวเข้าถึงเมนู/ปุ่มกรอง/การ์ดได้ครบ
 
 ---
 
