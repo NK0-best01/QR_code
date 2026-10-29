@@ -121,3 +121,12 @@
 4. **Production & PostgreSQL Migration Checklist (`DEPLOY_CHECKLIST.md`):**
    - บันทึกแนวทางการย้ายจาก SQLite ไปยัง Managed PostgreSQL สำหรับ Production พร้อมแผนจัดเก็บ Sequence และการตั้งค่า Environment Variables ครบถ้วน
 
+## ส่วนต่อขยาย Phase 10–17: Login, Role, Dashboard, สถานะลงทะเบียน, Map (PROJECT_PLAN_AUTH_MAP.md)
+1. **Public QR Scanner & Non-Authed Root:** หน้า `/` (สแกน QR) และ `/register` อยู่นอกระบบ Authentication 100% ไม่อ่าน/ไม่ตรวจ session หรือ cookie ใดๆ และไม่ผ่าน proxy matcher เพื่อไม่ให้กระทบ flow เดิม
+2. **Straightforward 24h Session (No Remember Me):** ผู้ใช้ตัดสินใจตัด Checkbox "จดจำฉัน" ออกเพื่อความเรียบง่าย โดยให้ทุก Session มีอายุ 24 ชั่วโมงตรงไปตรงมา (`Max-Age=86400` และ JWT `exp` 24 ชม.)
+3. **Admin ≠ Root & Strict Permissions:** ไม่มี role `root`/`superadmin` ตรวจสอบ role แบบ allow-list เท่านั้น (`role === "admin"`) โดย admin มีสิทธิ์เฉพาะใน Dashboard, Map, ปัก/แก้ Pin, ยืนยันการลงทะเบียน และดู Log
+4. **Registration Status Pipeline:** ทุกข้อมูลที่ส่งเข้ามาทางหน้าเว็บสาธารณะเริ่มต้นด้วยสถานะ `UNREGISTERED` และจะเปลี่ยนเป็น `REGISTERED` ได้ทางเดียวคือ admin ปัก Pin แล้วยืนยัน (atomic confirmation)
+5. **Strict Point-In-Province Validation:** พิกัด Pin ต้องอยู่ภายในขอบเขตจังหวัดของข้อมูลนั้นจริง ทั้ง client และ server (400 `PIN_OUTSIDE_PROVINCE`)
+6. **Append-Only Pin Audit Log:** การยืนยันและการแก้ไข Pin ทุกครั้งถูกบันทึกลงตาราง `RegistrationPinLog` ภายใน transaction เดียวกัน และไม่มี endpoint สำหรับแก้ไขหรือลบ log
+
+

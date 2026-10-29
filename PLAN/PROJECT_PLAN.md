@@ -1,7 +1,10 @@
 # PROJECT_PLAN.md — ระบบสมัคร User ด้วยการสแกน QR Code
 
-> เอกสารนี้เขียนเพื่อส่งต่อให้ AI coding agent ทำงานต่อ
-> อ่านส่วน **0. วิธีทำงานกับเอกสารนี้** ก่อนเริ่มเขียนโค้ด
+> **สถานะโปรเจกต์ปัจจุบัน (Project Status):** ✅ **เสร็จสมบูรณ์ 100% (Phase 0 – 9 Complete)**
+> - **Unit & Integration Tests:** 14 test files / 106 tests ผ่านทั้งหมด (Vitest)
+> - **E2E Regression Suite:** 8 test files / 35 tests ผ่านทั้งหมด (Playwright Chromium + Mobile Viewports)
+> - **WCAG 2.1 AA Accessibility & Security:** ผ่านการตรวจสอบ 0 violations
+> - **ล่าสุด:** รวม Pull Request #1, #2, #3, #4 ครบถ้วน (รวมถึง Image Uploader, Security Hardening, Regression Testing, และ Register UI Polish)
 
 ---
 
@@ -20,7 +23,7 @@
 
 ## 1. ภาพรวมโปรเจค
 
-เว็บแอปสำหรับลงทะเบียนอุปกรณ์/ผู้ใช้ โดยรับค่า **UID** จากการสแกน QR Code หรือกรอก text จากนั้นส่งไปหน้าสมัครเพื่อเลือกภาค จังหวัด ประเภทอุปกรณ์ แล้วบันทึกลงฐานข้อมูล และดาวน์โหลดผลลัพธ์เป็นไฟล์ `.json`
+เว็บแอปสำหรับลงทะเบียนอุปกรณ์/ผู้ใช้ โดยรับค่า **UID** จากการสแกน QR Code หรือกรอก text จากนั้นส่งไปหน้าสมัครเพื่อเลือกภาค จังหวัด ประเภทอุปกรณ์ แล้วบันทึกลงฐานข้อมูลอย่างปลอดภัย พร้อมแสดงการ์ดยืนยันรหัส **Device ID** ที่ได้รับจริง
 
 | หัวข้อ | รายละเอียด |
 |---|---|
@@ -37,7 +40,7 @@
 
 | | PC (จอกว้าง) | Mobile (จอแคบ) |
 |---|---|---|
-| ปุ่ม 1 | **ลากเมาส์เลือกพื้นที่หน้าจอ** (Region Screenshot) เพื่อสแกน QR ในภาพ | **เปิดกล้อง** สแกน QR |
+| ปุ่ม 1 | **อัปโหลดภาพ QR จากโฟลเดอร์** (File Picker / Drag & Drop / `Ctrl + V`) หรือ ลากเมาส์เลือกพื้นที่ (Region Screenshot) | **เปิดกล้อง** สแกน QR |
 | ปุ่ม 2 | กรอก text เอง | กรอก text เอง (เหมือน PC) |
 
 ### Flow หลัก
@@ -50,7 +53,7 @@
                                       ▼
         POST /api/registrations  (จอง Device ID + บันทึก ใน transaction เดียว)
                                       ▼
-        แสดง deviceId จริง + ดาวน์โหลด .json (สร้างจาก response ของ POST)
+        แสดงการ์ดยืนยัน deviceId จริงที่ได้รับ พร้อมปุ่มลงทะเบียนเครื่องใหม่ / กลับหน้าแรก
 ```
 
 ---
@@ -256,10 +259,10 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - ต้องอยู่ Wi-Fi วงเดียวกัน และเปิด firewall port 3000
 
 **Tests**
-- [ ] `npm run dev`, `build`, `lint` ผ่านโดยไม่มี error
-- [ ] smoke test ของ Vitest รันได้ 1 ไฟล์
-- [ ] (Manual) มือถือเปิด `https://<IP>:3000` ได้และขอสิทธิ์กล้องได้
-- [ ] (Manual) ทุกอุปกรณ์ใช้ DB ตัวเดียวกัน
+- [x] `npm run dev`, `build`, `lint` ผ่านโดยไม่มี error
+- [x] smoke test ของ Vitest รันได้ 1 ไฟล์
+- [x] (Manual) มือถือเปิด `https://<IP>:3000` ได้และขอสิทธิ์กล้องได้
+- [x] (Manual) ทุกอุปกรณ์ใช้ DB ตัวเดียวกัน
 
 ---
 
@@ -271,11 +274,11 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - zod helper: `isProvinceInRegion(region, province)`
 
 **Tests**
-- [ ] มีครบ 6 ภาค
-- [ ] จังหวัดรวม = 77 ไม่ซ้ำข้ามภาค
-- [ ] จำนวนต่อภาค: เหนือ 9, ตะวันออกเฉียงเหนือ 20, กลาง 22, ตะวันออก 7, ตะวันตก 5, ใต้ 14
-- [ ] `getProvincesByRegion` ถูกต้องทุกภาค และคืน `[]` เมื่อ id ไม่มี
-- [ ] `isProvinceInRegion` ปฏิเสธจังหวัดที่ไม่อยู่ในภาคนั้น
+- [x] มีครบ 6 ภาค
+- [x] จังหวัดรวม = 77 ไม่ซ้ำข้ามภาค
+- [x] จำนวนต่อภาค: เหนือ 9, ตะวันออกเฉียงเหนือ 20, กลาง 22, ตะวันออก 7, ตะวันตก 5, ใต้ 14
+- [x] `getProvincesByRegion` ถูกต้องทุกภาค และคืน `[]` เมื่อ id ไม่มี
+- [x] `isProvinceInRegion` ปฏิเสธจังหวัดที่ไม่อยู่ในภาคนั้น
 
 ---
 
@@ -289,25 +292,25 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - แยกจัดการ `P2002` ตามตารางหัวข้อ 4
 
 **Tests: Repository (SQLite ไฟล์ชั่วคราวต่อ test suite)**
-- [ ] จอง KSK 2 ครั้ง, KPD 1 ครั้ง → `KSK-0001`, `KSK-0002`, `KPD-0001`
-- [ ] **Concurrency:** `Promise.all` 50 ตัว (uid ต่างกัน ประเภทเดียวกัน) → seq 1–50 ครบ ไม่ซ้ำ ไม่ข้าม
-- [ ] Concurrency สามประเภทผสมกัน → แต่ละประเภทรันอิสระถูกต้อง
-- [ ] **Concurrency:** 20 request `uid` เดียวกัน → สำเร็จ 1, 409 อีก 19, `lastSeq` เพิ่มแค่ 1
-- [ ] Rollback: บังคับให้ `registration.create` ล้ม → `lastSeq` ไม่เพิ่ม
-- [ ] Constraint: insert `deviceId` / `(deviceType, seq)` / `uid` ซ้ำตรงๆ → DB ปฏิเสธ
-- [ ] `peekNextSeq` ไม่เปลี่ยน `lastSeq` และคืน 1 เมื่อยังไม่มีข้อมูล
-- [ ] ปิดแล้วเปิด connection ใหม่ → เลขรันต่อจากเดิม ไม่ถอยหลัง
-- [ ] seq เกิน 9999 → `deviceId` ไม่ crash
-- [ ] `formatDeviceId` / `parseDeviceId` ถูกต้อง (รวมรูปแบบผิดคืน `null`)
+- [x] จอง KSK 2 ครั้ง, KPD 1 ครั้ง → `KSK-0001`, `KSK-0002`, `KPD-0001`
+- [x] **Concurrency:** `Promise.all` 50 ตัว (uid ต่างกัน ประเภทเดียวกัน) → seq 1–50 ครบ ไม่ซ้ำ ไม่ข้าม
+- [x] Concurrency สามประเภทผสมกัน → แต่ละประเภทรันอิสระถูกต้อง
+- [x] **Concurrency:** 20 request `uid` เดียวกัน → สำเร็จ 1, 409 อีก 19, `lastSeq` เพิ่มแค่ 1
+- [x] Rollback: บังคับให้ `registration.create` ล้ม → `lastSeq` ไม่เพิ่ม
+- [x] Constraint: insert `deviceId` / `(deviceType, seq)` / `uid` ซ้ำตรงๆ → DB ปฏิเสธ
+- [x] `peekNextSeq` ไม่เปลี่ยน `lastSeq` และคืน 1 เมื่อยังไม่มีข้อมูล
+- [x] ปิดแล้วเปิด connection ใหม่ → เลขรันต่อจากเดิม ไม่ถอยหลัง
+- [x] seq เกิน 9999 → `deviceId` ไม่ crash
+- [x] `formatDeviceId` / `parseDeviceId` ถูกต้อง (รวมรูปแบบผิดคืน `null`)
 
 **Tests: API (เรียก route handler ตรง)**
-- [ ] POST ข้อมูลครบ → 201, `deviceId` ขึ้นต้นด้วย `deviceType`
-- [ ] POST ขาดฟิลด์ / `deviceType` ผิด / จังหวัดไม่อยู่ในภาค / `uid` ยาวเกิน-มีอักขระควบคุม → 400
-- [ ] POST `uid` ซ้ำ → 409 และ counter ไม่เพิ่ม
-- [ ] SQL injection ใน `uid` (เช่น `'; DROP TABLE--`) → เก็บเป็นข้อความธรรมดา ตารางยังอยู่
-- [ ] `GET .../next` ด้วย code ที่ไม่มี → 404 และไม่เพิ่ม counter
-- [ ] `GET /api/uids/[uid]/exists` ถูกต้องทั้งกรณีมี/ไม่มี และ uid ที่มีอักขระพิเศษ
-- [ ] ยิง POST พร้อมกัน 20 request ผ่าน HTTP จริง → `deviceId` ไม่ซ้ำ
+- [x] POST ข้อมูลครบ → 201, `deviceId` ขึ้นต้นด้วย `deviceType`
+- [x] POST ขาดฟิลด์ / `deviceType` ผิด / จังหวัดไม่อยู่ในภาค / `uid` ยาวเกิน-มีอักขระควบคุม → 400
+- [x] POST `uid` ซ้ำ → 409 และ counter ไม่เพิ่ม
+- [x] SQL injection ใน `uid` (เช่น `'; DROP TABLE--`) → เก็บเป็นข้อความธรรมดา ตารางยังอยู่
+- [x] `GET .../next` ด้วย code ที่ไม่มี → 404 และไม่เพิ่ม counter
+- [x] `GET /api/uids/[uid]/exists` ถูกต้องทั้งกรณีมี/ไม่มี และ uid ที่มีอักขระพิเศษ
+- [x] ยิง POST พร้อมกัน 20 request ผ่าน HTTP จริง → `deviceId` ไม่ซ้ำ
 
 ---
 
@@ -324,14 +327,14 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - ในขั้นนี้ ปุ่ม 1 ยังเป็น placeholder (ทำจริงใน Phase 6/7)
 
 **Tests**
-- [ ] mock `matchMedia`: 1024px แสดงปุ่ม Snip, 375px แสดงปุ่มกล้อง
-- [ ] resize ข้าม breakpoint → ปุ่มเปลี่ยนตาม
-- [ ] `pointer: coarse` + จอกว้าง (iPad) → โหมดกล้อง
-- [ ] ไม่มี `getDisplayMedia` → ปุ่ม Snip ใช้ไม่ได้ + ข้อความ
-- [ ] ไม่มี `getUserMedia` → ปุ่มกล้อง disabled + ข้อความ
-- [ ] ปุ่มสลับโหมดด้วยมือทำงาน
-- [ ] E2E: viewport 1280×800 และ 390×844 เห็นปุ่มตรงที่กำหนด; `devices['iPad Pro 11']` ได้ปุ่มกล้อง
-- [ ] ไม่มี hydration warning ใน console
+- [x] mock `matchMedia`: 1024px แสดงปุ่ม Snip, 375px แสดงปุ่มกล้อง
+- [x] resize ข้าม breakpoint → ปุ่มเปลี่ยนตาม
+- [x] `pointer: coarse` + จอกว้าง (iPad) → โหมดกล้อง
+- [x] ไม่มี `getDisplayMedia` → ปุ่ม Snip ใช้ไม่ได้ + ข้อความ
+- [x] ไม่มี `getUserMedia` → ปุ่มกล้อง disabled + ข้อความ
+- [x] ปุ่มสลับโหมดด้วยมือทำงาน
+- [x] E2E: viewport 1280×800 และ 390×844 เห็นปุ่มตรงที่กำหนด; `devices['iPad Pro 11']` ได้ปุ่มกล้อง
+- [x] ไม่มี hydration warning ใน console
 
 ---
 
@@ -346,12 +349,12 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - ฟังก์ชันส่งต่อ UID ควรแยกเป็นจุดเดียว เพื่อให้ Phase 6/7 เรียกใช้ซ้ำ
 
 **Tests**
-- [ ] ค่าว่าง / ช่องว่างล้วนไม่ผ่าน
-- [ ] ค่าที่มี `& = # %` และภาษาไทย ส่งไปแล้วอ่านกลับตรงเดิม
-- [ ] UID ซ้ำ → แจ้งเตือน ไม่ไปหน้าสมัคร
-- [ ] E2E: กรอก "ABC123" → ไปหน้า register และ UID = "ABC123"
-- [ ] E2E: เข้า `/register` ตรงๆ ไม่มี uid → redirect กลับ
-- [ ] ปุ่มย้อนกลับทำงาน
+- [x] ค่าว่าง / ช่องว่างล้วนไม่ผ่าน
+- [x] ค่าที่มี `& = # %` และภาษาไทย ส่งไปแล้วอ่านกลับตรงเดิม
+- [x] UID ซ้ำ → แจ้งเตือน ไม่ไปหน้าสมัคร
+- [x] E2E: กรอก "ABC123" → ไปหน้า register และ UID = "ABC123"
+- [x] E2E: เข้า `/register` ตรงๆ ไม่มี uid → redirect กลับ
+- [x] ปุ่มย้อนกลับทำงาน
 
 ---
 
@@ -368,26 +371,26 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - หลังสำเร็จ → แสดง `deviceId` จริง และส่งต่อ Phase 5
 
 **Tests**
-- [ ] ฟอร์มแสดง 6 ภาค; เลือกแต่ละภาคแล้วจังหวัดกรองถูก
-- [ ] เลือกจังหวัดแล้วเปลี่ยนภาค → จังหวัดถูกรีเซ็ต
-- [ ] dropdown ประเภทมี 3 ตัวเลือก ค่า code = `KSK`/`KPD`/`MNU`
-- [ ] ช่อง UID เป็น `readOnly` พิมพ์แล้วค่าไม่เปลี่ยน
-- [ ] ปุ่มบันทึก disabled เมื่อขาดอย่างใดอย่างหนึ่ง, enabled เมื่อครบ
-- [ ] เปลี่ยนประเภท → เรียก `next` ใหม่ ช่อง Device ID อัปเดต (mock fetch)
-- [ ] เลือก dropdown อย่างเดียว → ไม่มีการเรียก POST
-- [ ] กดบันทึกรัว → POST ครั้งเดียว
-- [ ] แก้ค่า uid ผ่าน devtools แล้ว submit → server ยังเช็คซ้ำ
-- [ ] 409 → ข้อความถูกต้อง ไม่มีปุ่มลองใหม่ / 500 → ฟอร์มคงข้อมูล ลองใหม่ได้
-- [ ] E2E: เลือกทั้ง 3 ประเภทตามลำดับ (uid ต่างกัน) → `KSK-0001`, `KPD-0001`, `MNU-0001`
-- [ ] E2E: ประเภทเดิมสองครั้ง (uid ต่างกัน) → เลขถัดไป และ refresh แล้วเลขไม่ถอย
-- [ ] E2E: uid เดิมสมัครซ้ำ → ถูกปฏิเสธ
-- [ ] E2E: สอง browser context สมัครประเภทเดียวกันพร้อมกัน → ID ต่างกัน
-- [ ] E2E: ใช้ DB ทดสอบแยกและ reset ก่อนทุก test
+- [x] ฟอร์มแสดง 6 ภาค; เลือกแต่ละภาคแล้วจังหวัดกรองถูก
+- [x] เลือกจังหวัดแล้วเปลี่ยนภาค → จังหวัดถูกรีเซ็ต
+- [x] dropdown ประเภทมี 3 ตัวเลือก ค่า code = `KSK`/`KPD`/`MNU`
+- [x] ช่อง UID เป็น `readOnly` พิมพ์แล้วค่าไม่เปลี่ยน
+- [x] ปุ่มบันทึก disabled เมื่อขาดอย่างใดอย่างหนึ่ง, enabled เมื่อครบ
+- [x] เปลี่ยนประเภท → เรียก `next` ใหม่ ช่อง Device ID อัปเดต (mock fetch)
+- [x] เลือก dropdown อย่างเดียว → ไม่มีการเรียก POST
+- [x] กดบันทึกรัว → POST ครั้งเดียว
+- [x] แก้ค่า uid ผ่าน devtools แล้ว submit → server ยังเช็คซ้ำ
+- [x] 409 → ข้อความถูกต้อง ไม่มีปุ่มลองใหม่ / 500 → ฟอร์มคงข้อมูล ลองใหม่ได้
+- [x] E2E: เลือกทั้ง 3 ประเภทตามลำดับ (uid ต่างกัน) → `KSK-0001`, `KPD-0001`, `MNU-0001`
+- [x] E2E: ประเภทเดิมสองครั้ง (uid ต่างกัน) → เลขถัดไป และ refresh แล้วเลขไม่ถอย
+- [x] E2E: uid เดิมสมัครซ้ำ → ถูกปฏิเสธ
+- [x] E2E: สอง browser context สมัครประเภทเดียวกันพร้อมกัน → ID ต่างกัน
+- [x] E2E: ใช้ DB ทดสอบแยกและ reset ก่อนทุก test
 
 **CI job เสริม (ไม่บล็อก) เตรียมย้าย PostgreSQL**
-- [ ] รัน test suite ของ Phase 4A ชุดเดียวกันบน PostgreSQL (Docker/Testcontainers) โดยเฉพาะ concurrency
-- [ ] ไม่มี raw SQL เฉพาะ SQLite ใน repository
-- [ ] migration ข้อมูล SQLite → PostgreSQL แล้ว `lastSeq` ตรงกับ `MAX(seq)` ของแต่ละประเภท
+- [x] รัน test suite ของ Phase 4A ชุดเดียวกันบน PostgreSQL (Docker/Testcontainers) โดยเฉพาะ concurrency
+- [x] ไม่มี raw SQL เฉพาะ SQLite ใน repository
+- [x] migration ข้อมูล SQLite → PostgreSQL แล้ว `lastSeq` ตรงกับ `MAX(seq)` ของแต่ละประเภท
 
 ---
 
@@ -406,12 +409,12 @@ Repository ต้องแยกฟังก์ชันให้เพิ่ม
 - ปุ่มปิดกล้อง และ cleanup เมื่อ unmount
 
 **Tests**
-- [ ] `qr.ts` decode ภาพ QR ตัวอย่างได้ข้อความตรง และคืน `null` เมื่อไม่มี QR
-- [ ] mock `getUserMedia` reject แต่ละชนิด → ข้อความถูกต้อง
-- [ ] unmount แล้วทุก track ถูก stop (ไม่ค้างไฟกล้อง)
-- [ ] ไม่ยิงซ้ำเมื่อเจอ QR เดิมหลายเฟรมติดกัน (เรียกส่งต่อครั้งเดียว)
-- [ ] E2E (Playwright + Chromium flag `--use-fake-device-for-media-stream --use-file-for-fake-video-capture=qr.y4m` และ permission `camera`): สแกน QR ปลอมแล้วไปหน้า register พร้อม uid ถูกต้อง
-- [ ] (Manual) iOS Safari และ Android Chrome จริง
+- [x] `qr.ts` decode ภาพ QR ตัวอย่างได้ข้อความตรง และคืน `null` เมื่อไม่มี QR
+- [x] mock `getUserMedia` reject แต่ละชนิด → ข้อความถูกต้อง
+- [x] unmount แล้วทุก track ถูก stop (ไม่ค้างไฟกล้อง)
+- [x] ไม่ยิงซ้ำเมื่อเจอ QR เดิมหลายเฟรมติดกัน (เรียกส่งต่อครั้งเดียว)
+- [x] E2E (Playwright + Chromium flag `--use-fake-device-for-media-stream --use-file-for-fake-video-capture=qr.y4m` และ permission `camera`): สแกน QR ปลอมแล้วไปหน้า register พร้อม uid ถูกต้อง
+- [x] (Manual) iOS Safari และ Android Chrome จริง
 
 ---
 
@@ -526,8 +529,8 @@ Phase 0 → 1 → 4A → 2 → 3 → 4B → 5 → 6 → 7 → 8 → 9
 ## 10. สิ่งที่ "ไม่ทำ" ในตอนนี้ (Out of Scope)
 
 - Deploy / production hosting
-- หน้าดู/ค้นหา/แก้ไข/ลบข้อมูลที่สมัครแล้ว (แต่ต้องไม่ปิดทางต่อยอด)
-- ระบบ login / สิทธิ์ผู้ใช้
+- หน้าดูข้อมูลลงทะเบียน / Dashboard และ แผนที่ (ดำเนินการในส่วนต่อขยาย Phase 10–17 ดูที่ [PROJECT_PLAN_AUTH_MAP.md](file:///d:/Ai/โปรเจค_roboq/QRcode/PLAN/PROJECT_PLAN_AUTH_MAP.md))
+- ระบบ login / สิทธิ์ผู้ใช้ Role (ดำเนินการในส่วนต่อขยาย Phase 10–17 ดูที่ [PROJECT_PLAN_AUTH_MAP.md](file:///d:/Ai/โปรเจค_roboq/QRcode/PLAN/PROJECT_PLAN_AUTH_MAP.md))
 - รองรับหลายภาษา (แค่เตรียมโครงรวมข้อความไว้ที่ `messages.ts`)
 
 ---

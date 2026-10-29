@@ -21,10 +21,16 @@
 npm install
 ```
 
-### 2. ตั้งค่าฐานข้อมูล SQLite
+### 2. ตั้งค่าฐานข้อมูล SQLite และ Seed บัญชีผู้ใช้ตัวอย่าง
 ```bash
 npm run db:migrate
+npm run db:seed
 ```
+
+> ⚠️ **ข้อควรระวังเรื่องความปลอดภัย:** คำสั่ง Seed จะสร้างบัญชีตัวอย่างสำหรับสภาพแวดล้อม Development เท่านั้น และจะปฏิเสธการรันบน `NODE_ENV=production` เด็ดขาด:
+> - **Admin:** `admin1` / รหัสผ่าน: `1234` (Role: `admin`)
+> - **User:** `user1` / รหัสผ่าน: `1234` (Role: `user`)
+> *รหัสผ่าน `1234` มีไว้เพื่อทดสอบตอน dev เท่านั้น ห้ามใช้บนระบบจริง*
 
 ### 3. รัน Development Server ด้วย HTTPS
 ```bash

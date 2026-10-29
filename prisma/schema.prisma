@@ -24,3 +24,11 @@ model Registration {
 
   @@unique([deviceType, seq])
 }
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  role         String
+  createdAt    DateTime @default(now())
+}
