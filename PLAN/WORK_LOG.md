@@ -197,6 +197,57 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 4: Phase 13 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
+## Part 4: Phase 13 — 77 Provinces Boundary Data & Point-in-Polygon Engine
+- **Branch:** `geo-provinces`
+- **สถานะ:** ✅ สำเร็จสมบูรณ์ (Completed) — 2026-10-29
+
+### 1. สิ่งที่ทำ (Actions Taken)
+1. **Branch Management:** แตก branch ใหม่ `geo-provinces` จาก `auth-login`
+2. **Data Acquisition & Mapping (`src/data/thailand-provinces.json`):**
+   - นำเข้าชุดข้อมูลขอบเขตทั้ง 77 จังหวัดของประเทศไทยจาก `apisit/thailand.json` (Open Data / MIT License)
+   - ประกอบด้วย 69 Polygon และ 8 MultiPolygon (เกาะต่างๆ เช่น ภูเก็ต, ตราด, สุราษฎร์ธานี ฯลฯ)
+   - ทำ Mapping จับคู่ชื่อภาษาอังกฤษและภาษาไทยให้ตรงกับ `src/data/thai-regions.ts` ครบถ้วน 100% (77/77 จังหวัด ทั้งบึงกาฬ และกรุงเทพมหานคร)
+   - คำนวณ Bounding Box (`bbox`: `[minLng, minLat, maxLng, maxLat]`) และ Representative Internal Point (`sample_point`) บันทึกฝังไว้ใน properties ล่วงหน้า
+3. **Point-in-Polygon Engine (`src/lib/province-geo.ts`):**
+   - พัฒนาอัลกอริทึม Planar Ray-Casting Point-in-Polygon ทำงานได้ทั้ง Polygon และ MultiPolygon (รวมถึงการตรวจ hole/รูพรุน)
+   - **O(1) BBox Pre-check:** กรองพิกัดที่อยู่นอก Bounding Box ออกทันทีในระดับ O(1) ก่อนเข้าคำนวณ polygon rays
+   - **In-Memory Cache:** ดัชนีข้อมูล `Map<string, ProvinceFeature>` ครั้งเดียวตอนโหลดโมดูล ไม่ parse ซ้ำในแต่ละ request
+   - **Coordinate Sanity & Anti-Swap Guard:**
+     - ตรวจสอบ `NaN`, `Infinity`, null, undefined, และพิกัดนอกช่วงโลก (`lat < -90 || lat > 90 || lng < -180 || lng > 180`) คืน `false` อย่างปลอดภัย
+     - ตรวจสอบชื่อจังหวัดที่ไม่มีในระบบ: `throw Error` ชัดเจน
+   - มี helper functions: `getAllProvincesGeo`, `getAllProvinceNames`, `getProvinceBBox`, `getProvinceSamplePoint`, `findProvinceFeature`
+4. **Architectural Decisions (`DECISIONS.md`):**
+   - บันทึกแหล่งที่มาของข้อมูล (apisit/thailand.json, MIT License)
+   - บันทึกเหตุผลการเลือก Planar Ray-Casting แทน spherical projection (ไม่ติดปัญหา winding order และเร็วระดับไมโครวินาที)
+5. **Testing Suite (`src/__tests__/province-geo.test.ts`):**
+   - 16 tests ครอบคลุม:
+     - 77 จังหวัดตรงกับ thai-regions.ts 100%
+     - พิกัดสถานที่จริง (เชียงใหม่, กทม., ภูเก็ต, อุบลราชธานี, สงขลา)
+     - จุดของจังหวัดหนึ่งไม่อยู่ในอีกจังหวัดหนึ่ง
+     - จุดกลางอ่าวไทยไม่อยู่ในจังหวัดใด
+     - การสลับค่า lat/lng ตั้งใจคืน `false`
+     - จุดตัวแทน (`sample_point`) ทั้ง 77 จังหวัด ผ่านการตรวจของจังหวัดตัวเองครบ 100%
+     - ชื่อจังหวัดผิด throw Error
+     - NaN/Infinity คืน `false`
+     - Performance Benchmark: 1,000 ครั้งใช้เวลาเพียง ~39ms (< 50ms)
+
+### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
+1. **TypeScript Tuple Incompatibility ใน JSON Import:**
+   - *Error:* `Conversion of type ... to type '{ features: ProvinceFeature[]; }' may be a mistake ... Target requires 4 element(s) but source may have fewer.`
+   - *สาเหตุ:* TypeScript infer ฟิลด์ `bbox` จากการ import JSON เป็น `number[]` ทั่วไป ไม่ตรงกับ tuple `[number, number, number, number]` ของ interface
+
+### 3. วิธีการแก้ไข (Solutions & Fixes)
+1. ปรับการ type cast ขณะ import ผ่าน `unknown`: `(thailandGeoData as unknown as { features: ProvinceFeature[] }).features` ทำให้ build ผ่านและคง Type safety ครบถ้วน
+
+### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
+- **Unit & Integration Tests (`npm test`):** ผ่าน **18 test files / 169 tests (100% Passed)**
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% ไร้ warning ไร้ type error
+- **Lint Check (`npm run lint`):** ผ่าน **0 errors, 0 warnings**
+- ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
+
+---
+*(Part 5: Phase 14 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
 
 

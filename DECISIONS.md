@@ -128,5 +128,11 @@
 4. **Registration Status Pipeline:** ทุกข้อมูลที่ส่งเข้ามาทางหน้าเว็บสาธารณะเริ่มต้นด้วยสถานะ `UNREGISTERED` และจะเปลี่ยนเป็น `REGISTERED` ได้ทางเดียวคือ admin ปัก Pin แล้วยืนยัน (atomic confirmation)
 5. **Strict Point-In-Province Validation:** พิกัด Pin ต้องอยู่ภายในขอบเขตจังหวัดของข้อมูลนั้นจริง ทั้ง client และ server (400 `PIN_OUTSIDE_PROVINCE`)
 6. **Append-Only Pin Audit Log:** การยืนยันและการแก้ไข Pin ทุกครั้งถูกบันทึกลงตาราง `RegistrationPinLog` ภายใน transaction เดียวกัน และไม่มี endpoint สำหรับแก้ไขหรือลบ log
+7. **Thailand 77 Provinces GeoJSON & Point-in-Polygon (Phase 13):**
+   - **แหล่งที่มาข้อมูล & License:** เลือกใช้ชุดข้อมูล `thailand.json` จาก [apisit/thailand.json](https://github.com/apisit/thailand.json) (Open Data / MIT License) ครบทั้ง 77 จังหวัด (69 Polygon, 8 MultiPolygon รวมถึงบึงกาฬและกรุงเทพมหานคร)
+   - **การจับคู่ชื่อภาษาไทย:** จับคู่ชื่อภาษาอังกฤษเข้ากับชื่อภาษาไทยทั้ง 77 จังหวัดใน `src/data/thai-regions.ts` ครบถ้วน 100% ไม่มีขาด/เกิน
+   - **Planar Ray-Casting Algorithm:** เลือกใช้อัลกอริทึม Ray-Casting แบบ Planar แทน spherical projection (d3-geo) เพื่อป้องกันปัญหาเรื่อง winding order (ลำดับการวนขอบเขต) และรองรับทั้ง Polygon เดี่ยว และ MultiPolygon (จังหวัดเกาะ) ได้อย่างแม่นยำ
+   - **O(1) Bounding Box Pre-filter & In-Memory Cache:** คำนวณ Bounding Box (`bbox`: `[minLng, minLat, maxLng, maxLat]`) และ Representative Internal Point (`sample_point`) บันทึกไว้ล่วงหน้า และทำ in-memory index บนโมดูล ทำให้การเช็คพิกัดอยู่นอกจังหวัดเสร็จใน O(1) ทันที (Benchmark 1,000 requests < 40ms)
+
 
 
