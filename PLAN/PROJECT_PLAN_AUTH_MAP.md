@@ -383,34 +383,34 @@ e2e/helpers/auth.ts                     # login helper + storageState ต่อ 
 - ปรับถ้อยคำฝั่งสมัครตาม Q9
 
 **Tests: Repository**
-- [ ] สมัครใหม่ → `status = UNREGISTERED`, ฟิลด์ pin/confirm เป็น null และยังไม่มี log
-- [ ] `confirmRegistration` → `REGISTERED` + พิกัด + `confirmedAt` + `confirmedById` ครบ และมี log 1 แถว (`CONFIRM`, old = null, new = พิกัด, `actorUsername` ถูก)
-- [ ] confirm ซ้ำ id เดิม → ปฏิเสธ (409) พิกัดเดิมไม่ถูกเขียนทับ และไม่มี log เพิ่ม
-- [ ] **Concurrency:** confirm id เดียวกันพร้อมกัน 10 ครั้ง → สำเร็จ 1 อีก 9 เป็น 409; log มี 1 แถว
-- [ ] `updatePin` บน `REGISTERED` → พิกัดเปลี่ยน, log `UPDATE` มี old/new ถูกต้อง, `status` ยังเป็น `REGISTERED`
-- [ ] `updatePin` บน `UNREGISTERED` → ปฏิเสธ (`NOT_REGISTERED`) ไม่เปลี่ยนอะไร ไม่มี log
-- [ ] `updatePin` พิกัดเท่าเดิม → ไม่เปลี่ยน ไม่เขียน log
-- [ ] **Concurrency:** แก้ pin พร้อมกัน 2 admin → log เรียงต่อกันได้ (ค่า old ของรายการหลัง = ค่า new ของรายการก่อน) ไม่มี log ที่ old ผิด
-- [ ] **Atomicity:** บังคับให้การเขียน log ล้ม → พิกัดไม่เปลี่ยน/สถานะไม่เปลี่ยน (rollback ทั้งก้อน)
-- [ ] `listPinLogs` เรียงใหม่สุดก่อน; id ไม่มี → ผลว่าง/404 ตามที่ route กำหนด
-- [ ] `countByStatus` ถูกต้อง; `listRegistrations` กรองสถานะ + แบ่งหน้า; **เรียง `createdAt` ใหม่สุดก่อน** (ทดสอบด้วยข้อมูลที่ `createdAt` ต่างกัน และกรณีเท่ากันเรียงด้วย `id`); ไม่ส่ง `status` → ได้ทั้ง 2 สถานะ
-- [ ] `listPins` คืนเฉพาะ `REGISTERED`
-- [ ] แถวเดิมก่อน migration มีสถานะ `UNREGISTERED`
-- [ ] test Phase 4A เดิม (concurrency ของ Device ID ฯลฯ) ผ่านครบ ไม่กระทบเลขรัน
+- [x] สมัครใหม่ → `status = UNREGISTERED`, ฟิลด์ pin/confirm เป็น null และยังไม่มี log
+- [x] `confirmRegistration` → `REGISTERED` + พิกัด + `confirmedAt` + `confirmedById` ครบ และมี log 1 แถว (`CONFIRM`, old = null, new = พิกัด, `actorUsername` ถูก)
+- [x] confirm ซ้ำ id เดิม → ปฏิเสธ (409) พิกัดเดิมไม่ถูกเขียนทับ และไม่มี log เพิ่ม
+- [x] **Concurrency:** confirm id เดียวกันพร้อมกัน 10 ครั้ง → สำเร็จ 1 อีก 9 เป็น 409; log มี 1 แถว
+- [x] `updatePin` บน `REGISTERED` → พิกัดเปลี่ยน, log `UPDATE` มี old/new ถูกต้อง, `status` ยังเป็น `REGISTERED`
+- [x] `updatePin` บน `UNREGISTERED` → ปฏิเสธ (`NOT_REGISTERED`) ไม่เปลี่ยนอะไร ไม่มี log
+- [x] `updatePin` พิกัดเท่าเดิม → ไม่เปลี่ยน ไม่เขียน log
+- [x] **Concurrency:** แก้ pin พร้อมกัน 2 admin → log เรียงต่อกันได้ (ค่า old ของรายการหลัง = ค่า new ของรายการก่อน) ไม่มี log ที่ old ผิด
+- [x] **Atomicity:** บังคับให้การเขียน log ล้ม → พิกัดไม่เปลี่ยน/สถานะไม่เปลี่ยน (rollback ทั้งก้อน)
+- [x] `listPinLogs` เรียงใหม่สุดก่อน; id ไม่มี → ผลว่าง/404 ตามที่ route กำหนด
+- [x] `countByStatus` ถูกต้อง; `listRegistrations` กรองสถานะ + แบ่งหน้า; **เรียง `createdAt` ใหม่สุดก่อน** (ทดสอบด้วยข้อมูลที่ `createdAt` ต่างกัน และกรณีเท่ากันเรียงด้วย `id`); ไม่ส่ง `status` → ได้ทั้ง 2 สถานะ
+- [x] `listPins` คืนเฉพาะ `REGISTERED`
+- [x] แถวเดิมก่อน migration มีสถานะ `UNREGISTERED`
+- [x] test Phase 4A เดิม (concurrency ของ Device ID ฯลฯ) ผ่านครบ ไม่กระทบเลขรัน
 
 **Tests: API**
-- [ ] `POST /api/registrations` ไม่ login → 201 และ `status = UNREGISTERED`
-- [ ] POST ที่แนบ `status: "REGISTERED"` / `latitude` / `longitude` → **400** และไม่มีอะไรถูกบันทึก
-- [ ] `GET /api/registrations` ไม่ login → 401; user/admin → 200 พร้อม `counts`; ไม่ส่ง `status` → มีทั้ง 2 สถานะเรียงล่าสุดก่อน
-- [ ] `status=ผิดค่า` → 400; `pageSize` > 100 → 400 หรือถูกจำกัดตามที่จดใน `DECISIONS.md`
-- [ ] confirm / pin / logs: ไม่ login → 401, user → **403**, admin → ทำงานได้
-- [ ] confirm พิกัดที่ **อยู่ในจังหวัดของข้อมูล** → 200; **นอกจังหวัด** (แต่ยังอยู่ในประเทศไทย) → 400 `PIN_OUTSIDE_PROVINCE` และไม่มีอะไรถูกบันทึก/ไม่มี log
-- [ ] PATCH pin พิกัดนอกจังหวัด → 400 `PIN_OUTSIDE_PROVINCE`; พิกัดเดิมไม่ถูกแตะ
-- [ ] confirm/PATCH พิกัดนอกประเทศ/ไม่ใช่ตัวเลข/NaN/ขาดฟิลด์ → 400
-- [ ] PATCH บน `UNREGISTERED` → 409 `NOT_REGISTERED`; confirm บน `REGISTERED` → 409
-- [ ] body ที่แนบ `confirmedById`, `status`, `actorId`, `actorUsername` → ถูกเมิน/400 (ผู้ทำรายการมาจาก session เท่านั้น); log ที่ได้ใช้ชื่อผู้ใช้จาก session
-- [ ] ไม่มี route `DELETE`/`PUT`/`PATCH`/`POST` ที่ทำงานกับ log (ยิงแล้วได้ 404/405)
-- [ ] rate limit/ขนาด body ของ `POST /api/registrations` ยังทำงานเหมือน Phase 8
+- [x] `POST /api/registrations` ไม่ login → 201 และ `status = UNREGISTERED`
+- [x] POST ที่แนบ `status: "REGISTERED"` / `latitude` / `longitude` → **400** และไม่มีอะไรถูกบันทึก
+- [x] `GET /api/registrations` ไม่ login → 401; user/admin → 200 พร้อม `counts`; ไม่ส่ง `status` → มีทั้ง 2 สถานะเรียงล่าสุดก่อน
+- [x] `status=ผิดค่า` → 400; `pageSize` > 100 → 400 หรือถูกจำกัดตามที่จดใน `DECISIONS.md`
+- [x] confirm / pin / logs: ไม่ login → 401, user → **403**, admin → ทำงานได้
+- [x] confirm พิกัดที่ **อยู่ในจังหวัดของข้อมูล** → 200; **นอกจังหวัด** (แต่ยังอยู่ในประเทศไทย) → 400 `PIN_OUTSIDE_PROVINCE` และไม่มีอะไรถูกบันทึก/ไม่มี log
+- [x] PATCH pin พิกัดนอกจังหวัด → 400 `PIN_OUTSIDE_PROVINCE`; พิกัดเดิมไม่ถูกแตะ
+- [x] confirm/PATCH พิกัดนอกประเทศ/ไม่ใช่ตัวเลข/NaN/ขาดฟิลด์ → 400
+- [x] PATCH บน `UNREGISTERED` → 409 `NOT_REGISTERED`; confirm บน `REGISTERED` → 409
+- [x] body ที่แนบ `confirmedById`, `status`, `actorId`, `actorUsername` → ถูกเมิน/400 (ผู้ทำรายการมาจาก session เท่านั้น); log ที่ได้ใช้ชื่อผู้ใช้จาก session
+- [x] ไม่มี route `DELETE`/`PUT`/`PATCH`/`POST` ที่ทำงานกับ log (ยิงแล้วได้ 404/405)
+- [x] rate limit/ขนาด body ของ `POST /api/registrations` ยังทำงานเหมือน Phase 8
 
 ---
 

@@ -247,7 +247,80 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 5: Phase 14 จะถูกบันทึกต่อในหัวข้อถัดไป)*
 
+## Part 5: Phase 14 — Registration Status, Admin Confirmation, Pin Update & Audit Logs
+- **Branch:** `registration-status`
+- **สถานะ:** ✅ สำเร็จสมบูรณ์ (Completed) — 2026-10-29
 
+### 1. สิ่งที่ทำ (Actions Taken)
+1. **Branch Management:** แตก branch ใหม่ `registration-status` จาก `geo-provinces`
+2. **Prisma Schema & Database Migration:**
+   - ปรับปรุงโมเดล `Registration` ใน `prisma/schema.prisma`:
+     - เพิ่มฟิลด์ `status` String (default "UNREGISTERED") พร้อม index `status` และ composite index `[status, createdAt]`
+     - เพิ่มฟิลด์พิกัดหมุด `latitude` Float? และ `longitude` Float?
+     - เพิ่มฟิลด์บันทึกผู้ยืนยัน `confirmedAt` DateTime?, `confirmedById` Int? พร้อม relation กับโมเดล `User`
+     - เพิ่ม relation `pinLogs` ไปยังโมเดลประวัติหมุด
+   - สร้างโมเดล `RegistrationPinLog` สำหรับ Audit Trail:
+     - ฟิลด์: `id`, `registrationId`, `action` ("CONFIRM" | "UPDATE"), `oldLatitude`, `oldLongitude`, `newLatitude`, `newLongitude`, `actorId`, `createdAt`
+     - Relations: เชื่อมกับ `Registration` (onDelete: Cascade) และ `User` (actor)
+     - Indexes: `registrationId`, `actorId`, `createdAt`
+   - รัน Migration: `20261029102056_add_registration_status_and_pin_logs` และ generate Prisma Client
+3. **Data Types & Constants (`src/data/registration-status.ts`):**
+   - กำหนด `REGISTRATION_STATUSES = ['UNREGISTERED', 'REGISTERED'] as const`
+   - สร้าง helper dictionary: `REGISTRATION_STATUS_LABELS`, `REGISTRATION_STATUS_BADGES` (สีและสไตล์ตามดีไซน์ซิสเต็ม)
+   - Zod schema: `registrationStatusSchema`
+4. **Repository Layer Functions (`src/lib/registration-repo.ts`):**
+   - สร้าง Custom Error Classes: `NotFoundError` (404), `AlreadyRegisteredError` (409), `NotRegisteredError` (409), `PinOutsideProvinceError` (400)
+   - **Atomic Confirmation (`confirmRegistration`):**
+     - ตรวจสอบ Point-in-Polygon ด้วย `isPointInProvince` เพื่อความมั่นใจว่าพิกัดอยู่ในจังหวัดที่ลงทะเบียนจริง
+     - ใช้ Prisma Transaction ร่วมกับ `updateMany({ where: { id, status: 'UNREGISTERED' }, data: ... })` เพื่อป้องกัน Race Condition จาก Admin กดยืนยันพร้อมกัน
+     - บันทึก `RegistrationPinLog` ชนิด `CONFIRM` โดยอัตโนมัติใน transaction เดียวกัน
+   - **Compare-and-Swap Pin Update (`updatePin`):**
+     - ตรวจสอบ Point-in-Polygon ซ้ำ
+     - หากพิกัดใหม่เท่ากับพิกัดเดิมเป๊ะ จะ return ทันทีโดยไม่สร้าง log ซ้ำซ้อน
+     - ใช้ Compare-and-Swap retry loop (สูงสุด 3 ครั้ง) เพื่อรับมือ Concurrent Updates อย่างแม่นยำ
+     - บันทึก `RegistrationPinLog` ชนิด `UPDATE` ใน transaction
+   - **Listing & Analytics Functions:**
+     - `listRegistrations`: รองรับ status filter ("ALL" | "UNREGISTERED" | "REGISTERED") พร้อม pagination และดึง counts สรุปภาพรวม
+     - `listPinLogs`: ดึงประวัติการแก้ไขหมุด เรียงจากล่าสุดไปเก่าสุด พร้อมชื่อผู้ดำเนินการ (`actor.username`)
+     - `listConfirmedPins`: ดึงเฉพาะหมุดที่ยืนยันแล้ว สำหรับแสดงผลบนแผนที่
+5. **REST API Route Handlers:**
+   - `GET /api/registrations`: ดึงรายการลงทะเบียน พร้อม pagination และ metadata (ป้องกันด้วย `requireSession`)
+   - `POST /api/registrations/[id]/confirm`: แอดมินยืนยันสถานะและปักหมุดครั้งแรก (ป้องกันด้วย `requireRole('admin')`)
+   - `PATCH /api/registrations/[id]/pin`: แอดมินแก้ไขพิกัดหมุด (ป้องกันด้วย `requireRole('admin')`)
+   - `GET /api/registrations/[id]/logs`: ดึงประวัติ Audit Log การปักหมุด (ป้องกันด้วย `requireRole('admin')`)
+6. **Testing Suite (`src/__tests__/registration-status-api.test.ts`):**
+   - 13 integration tests ครอบคลุม:
+     - สิทธิ์การเข้าถึง (401 เมื่อไม่มี session, 403 เมื่อไม่ใช่ admin)
+     - Pagination และ Status Filtering
+     - การยืนยันสถานะสำเร็จและการบันทึกพิกัด + log
+     - ปฏิเสธการยืนยันซ้ำ (409)
+     - ปฏิเสธพิกัดนอกจังหวัด (400)
+     - แก้ไขพิกัดหมุดสำเร็จและบันทึกประวัติ (409 หากยังไม่ลงทะเบียน)
+     - ไม่สร้าง log เมื่อส่งพิกัดเดิมซ้ำ
+     - Audit log เรียงลำดับถูกต้องพร้อมชื่อแอดมิน
 
+### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
+1. **Schema Validation Regression ใน `POST /api/registrations`:**
+   - *Error:* `src/__tests__/api-routes.test.ts` ล้ม 2 tests เนื่องจากคาดหวัง `json.error = 'Validation failed'`
+   - *สาเหตุ:* ระหว่างเพิ่มฟังก์ชัน `GET` ใน route handler มีการเปลี่ยนรูปแบบ response เมื่อ validation fail จากเดิม
+2. **Zod v4 Incompatibility กับ `required_error` ใน `coordsSchema`:**
+   - *Error:* Next.js build ล้มด้วย `TS2353: Object literal may only specify known properties, and 'required_error' does not exist in type '$ZodNumberParams'`
+   - *สาเหตุ:* Zod v4 เปลี่ยน signature ของ `z.number()` โดยยกเลิก `required_error` และให้ใช้ `{ message: ... }` แทน
+3. **ESLint Unused Variable Warning:**
+   - *Warning:* `'session' is assigned a value but never used` ใน `GET /api/registrations`
+
+### 3. วิธีการแก้ไข (Solutions & Fixes)
+1. คืนค่ารูปแบบ response เดิมของ `POST /api/registrations` เป็น `{ error: 'Validation failed', details: parseResult.error.format() }`
+2. ปรับ `coordsSchema` ใน route handler ของ `confirm` และ `pin` ให้ใช้ `z.number({ message: "..." })` ตามมาตรฐาน Zod v4
+3. เปลี่ยนการ destructure ใน `GET /api/registrations` เป็น `const { errorResponse } = await requireSession(request);`
+
+### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
+- **Unit & Integration Tests (`npm test`):** ผ่าน **19 test files / 182 tests (100% Passed)**
+- **Playwright E2E Tests (`npx playwright test`):** ผ่าน **46 tests (100% Passed)**
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% รัน SSG และ Route Manifest ครบทุกหน้า
+- **Lint Check (`npm run lint`):** ผ่าน **0 errors, 0 warnings**
+- ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
+
+---
+*(Part 6: Phase 15 จะถูกบันทึกต่อในหัวข้อถัดไป)*

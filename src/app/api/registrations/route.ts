@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registrationSchema } from '@/lib/schemas';
-import { createRegistration, DuplicateUidError } from '@/lib/registration-repo';
+import {
+  createRegistration,
+  listRegistrations,
+  DuplicateUidError,
+} from '@/lib/registration-repo';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { requireSession } from '@/lib/auth/guards';
 import messages from '@/lib/messages';
 
 const MAX_BODY_BYTES = 64 * 1024; // 64 KB limit
@@ -60,9 +65,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let body;
+    let rawBody: unknown;
     try {
-      body = JSON.parse(rawText);
+      rawBody = JSON.parse(rawText);
     } catch {
       return NextResponse.json(
         { error: messages.api.invalidJson },
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parseResult = registrationSchema.safeParse(body);
+    const parseResult = registrationSchema.safeParse(rawBody);
     if (!parseResult.success) {
       return NextResponse.json(
         {
@@ -102,3 +107,36 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  // 1. Session Guard (Requires authenticated user or admin)
+  const { errorResponse } = await requireSession(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
+
+  // 2. Parse query parameters
+  const url = new URL(request.url);
+  const statusParam = url.searchParams.get('status');
+  const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+  const pageSizeParam = parseInt(url.searchParams.get('pageSize') || '20', 10);
+
+  const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+  const pageSize =
+    isNaN(pageSizeParam) || pageSizeParam < 1
+      ? 20
+      : Math.min(100, pageSizeParam);
+
+  try {
+    const result = await listRegistrations({
+      status: statusParam,
+      page,
+      pageSize,
+    });
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการดึงข้อมูล';
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
+  }
+}

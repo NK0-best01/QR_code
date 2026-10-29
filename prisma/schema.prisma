@@ -13,22 +13,51 @@ model DeviceCounter {
 }
 
 model Registration {
-  id         Int      @id @default(autoincrement())
-  uid        String   @unique
-  region     String
-  province   String
-  deviceType String
-  seq        Int
-  deviceId   String   @unique
-  createdAt  DateTime @default(now())
+  id            Int                  @id @default(autoincrement())
+  uid           String               @unique
+  region        String
+  province      String
+  deviceType    String
+  seq           Int
+  deviceId      String               @unique
+  status        String               @default("UNREGISTERED") // UNREGISTERED | REGISTERED
+  latitude      Float?
+  longitude     Float?
+  confirmedAt   DateTime?
+  confirmedById Int?
+  confirmedBy   User?                @relation(fields: [confirmedById], references: [id])
+  pinLogs       RegistrationPinLog[]
+  createdAt     DateTime             @default(now())
 
   @@unique([deviceType, seq])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RegistrationPinLog {
+  id             Int          @id @default(autoincrement())
+  registrationId Int
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  action         String       // CONFIRM | UPDATE
+  oldLatitude    Float?       // null เมื่อ action = CONFIRM
+  oldLongitude   Float?
+  newLatitude    Float
+  newLongitude   Float
+  actorId        Int
+  actor          User         @relation(fields: [actorId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([registrationId])
+  @@index([actorId])
+  @@index([createdAt])
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
+  id           Int                  @id @default(autoincrement())
+  username     String               @unique
   passwordHash String
-  role         String
-  createdAt    DateTime @default(now())
+  role         String               // admin | user (validate ด้วย zod)
+  createdAt    DateTime             @default(now())
+  confirmed    Registration[]
+  pinLogs      RegistrationPinLog[]
 }
