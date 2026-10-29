@@ -300,21 +300,21 @@ e2e/helpers/auth.ts                     # login helper + storageState ต่อ 
 - `lib/auth/guards.ts`: `safeNextPath`, `requireSession`, `requireRole` (allow-list)
 
 **Tests**
-- [ ] login `admin1/1234` → 200, `Set-Cookie` มี `HttpOnly`, `Secure`, `SameSite=Lax`, `Max-Age=86400`, ไม่มีรหัสผ่านใน response/cookie
-- [ ] login `user1/1234` → 200 role `user`
-- [ ] JWT `exp` ≈ ออกให้ + 24 ชม. (ยอมคลาดเคลื่อนไม่เกิน 5 วินาที)
-- [ ] JWT อายุเกิน 24 ชม. (ใช้ fake timer) → `verifySession` คืน `null` แม้ cookie ยังอยู่ (พิสูจน์ว่าฝั่ง server บังคับอายุ ไม่พึ่ง cookie)
-- [ ] รหัสผิด / username ไม่มี → 401 **ข้อความเหมือนกันเป๊ะ**
-- [ ] body ไม่ครบ/ยาวเกิน → 400, เกิน 64KB → 413
-- [ ] เกิน rate limit → 429 + `Retry-After`
-- [ ] JWT ที่แก้ payload (เปลี่ยน role เป็น admin) → `verifySession` คืน `null`
-- [ ] JWT ลายเซ็นถูกแต่ `role` เป็น `"root"`/`"superadmin"`/ค่าไม่รู้จัก → `null`
-- [ ] `requireRole("admin")` ผ่านเฉพาะ `admin` (user/ไม่มี role/role แปลก → ไม่ผ่าน)
-- [ ] JWT ลงนามด้วย secret อื่น → `null`
-- [ ] `AUTH_SECRET` ไม่ตั้ง → throw ชัดเจน
-- [ ] `me` ไม่มี cookie → 401, มี cookie → ข้อมูลถูกต้อง
-- [ ] logout แล้ว cookie ถูกลบ
-- [ ] `safeNextPath`: `/dashboard` ✅, `//evil.com` ❌, `https://evil.com` ❌, `/\evil.com` ❌, `javascript:alert(1)` ❌, ค่าว่าง → default
+- [x] login `admin1/1234` → 200, `Set-Cookie` มี `HttpOnly`, `Secure`, `SameSite=Lax`, `Max-Age=86400`, ไม่มีรหัสผ่านใน response/cookie
+- [x] login `user1/1234` → 200 role `user`
+- [x] JWT `exp` ≈ ออกให้ + 24 ชม. (ยอมคลาดเคลื่อนไม่เกิน 5 วินาที)
+- [x] JWT อายุเกิน 24 ชม. (ใช้ fake timer) → `verifySession` คืน `null` แม้ cookie ยังอยู่ (พิสูจน์ว่าฝั่ง server บังคับอายุ ไม่พึ่ง cookie)
+- [x] รหัสผิด / username ไม่มี → 401 **ข้อความเหมือนกันเป๊ะ**
+- [x] body ไม่ครบ/ยาวเกิน → 400, เกิน 64KB → 413
+- [x] เกิน rate limit → 429 + `Retry-After`
+- [x] JWT ที่แก้ payload (เปลี่ยน role เป็น admin) → `verifySession` คืน `null`
+- [x] JWT ลายเซ็นถูกแต่ `role` เป็น `"root"`/`"superadmin"`/ค่าไม่รู้จัก → `null`
+- [x] `requireRole("admin")` ผ่านเฉพาะ `admin` (user/ไม่มี role/role แปลก → ไม่ผ่าน)
+- [x] JWT ลงนามด้วย secret อื่น → `null`
+- [x] `AUTH_SECRET` ไม่ตั้ง → throw ชัดเจน
+- [x] `me` ไม่มี cookie → 401, มี cookie → ข้อมูลถูกต้อง
+- [x] logout แล้ว cookie ถูกลบ
+- [x] `safeNextPath`: `/dashboard` ✅, `//evil.com` ❌, `https://evil.com` ❌, `/\evil.com` ❌, `javascript:alert(1)` ❌, ค่าว่าง → default
 
 ---
 

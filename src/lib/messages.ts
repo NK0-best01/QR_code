@@ -76,6 +76,16 @@ export const messages = {
     payloadTooLarge: 'ขนาดข้อมูลมีขนาดใหญ่เกินกว่าที่กำหนด (สูงสุด 64KB)',
     invalidJson: 'รูปแบบข้อมูล JSON ไม่ถูกต้อง',
   },
+  auth: {
+    invalidCredentials: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+    unauthorized: 'กรุณาเข้าสู่ระบบก่อนดำเนินการ',
+    forbidden: 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้',
+    usernameRequired: 'กรุณากรอกชื่อผู้ใช้',
+    passwordRequired: 'กรุณากรอกรหัสผ่าน',
+    loginSuccess: 'เข้าสู่ระบบสำเร็จ',
+    logoutSuccess: 'ออกจากระบบสำเร็จ',
+    tooManyLoginAttempts: 'พยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง',
+  },
 } as const;
 
 export default messages;

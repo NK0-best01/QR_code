@@ -82,4 +82,60 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 2: Phase 11 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
+## Part 2: Phase 11 — Session JWT (24h) & Auth API
+- **Branch:** `auth-session`
+- **สถานะ:** ✅ สำเร็จสมบูรณ์ (Completed) — 2026-10-29
+
+### 1. สิ่งที่ทำ (Actions Taken)
+1. **Branch Management:** แตก branch ใหม่ `auth-session` สั้นกระชับจาก `auth-db`
+2. **Dependencies & Environment:**
+   - ติดตั้ง `jose` สำหรับการลงนามและตรวจสอบ JWT Session แบบ Edge/Node runtime compatible
+   - เพิ่มตัวแปร `AUTH_SECRET` ใน `.env` และ `.env.example`
+3. **Thai Messages:**
+   - เพิ่มหมวด `auth` ใน `src/lib/messages.ts` (ข้อความแจ้งเตือนภาษาไทยสำหรับ login, logout, unauthorized, forbidden, rate limit)
+4. **Session & Security Implementation:**
+   - `src/lib/auth/session.ts`:
+     - ฟังก์ชัน `signSession` กำหนด expiration 24 ชั่วโมง (`SESSION_MAX_AGE_SECONDS = 86400`)
+     - ฟังก์ชัน `verifySession` ตรวจสอบ JWT signature และ role against strict allow-list
+     - ฟังก์ชัน `buildSetCookieHeader` เซ็ต cookie `session` แบบ `Max-Age=86400`, `HttpOnly`, `SameSite=Lax` (และ `Secure` ใน production)
+     - ฟังก์ชัน `buildClearCookieHeader` ลบ cookie ด้วย `Max-Age=0`
+     - ฟังก์ชัน `extractTokenFromCookieHeader` และ `getSessionFromRequest` ดึง session จาก cookie header
+   - `src/lib/auth/guards.ts`:
+     - ฟังก์ชัน `safeNextPath` ป้องกัน Open Redirect Attack (บล็อก absolute URLs, `//`, `/\`, และ dangerous schemes)
+     - ฟังก์ชัน `homePathForRole` กำหนด default path ตามบทบาทผู้ใช้
+     - ฟังก์ชัน `requireSession` และ `requireRole` ป้องกัน API routes
+5. **API Route Handlers:**
+   - `POST /api/auth/login`:
+     - Rate limit ≤ 10 req/min ต่อ IP ด้วย `checkRateLimit` (คืน 429 + Retry-After)
+     - Body size limit 64KB (Content-Length header & raw text, คืน 413)
+     - ป้องกัน Timing Attack: ถ้าไม่พบ user ให้รัน `verifyPassword` เทียบกับ `DUMMY_BCRYPT_HASH` เพื่อให้เวลาประมวลผลใกล้เคียงกัน
+     - ป้องกัน User Enumeration: กรณีรหัสผิดหรือไม่พบ user คืน status 401 พร้อมข้อความเดียวกันเป๊ะ ("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+     - ตั้งค่า Set-Cookie header 24 ชั่วโมงและตอบกลับ `200 { success: true, role, username, redirectTo }`
+   - `POST /api/auth/logout`: ล้าง session cookie (ตอบ `200 { success: true }` พร้อม Set-Cookie `Max-Age=0`)
+   - `GET /api/auth/me`: ตรวจสอบ session ปัจจุบัน (คืน 401 ถ้ายังไม่ล็อกอิน, คืน `200 { authenticated: true, user: { id, username, role } }`)
+6. **Testing:**
+   - สร้างชุดทดสอบ `src/__tests__/auth-api.test.ts` ครอบคลุม 22 tests (JWT sign/verify, tampered token, cookie helpers, Open redirect sanitization, login success/failure, user enumeration defense, rate limiting 429, payload too large 413, logout, และ me endpoint)
+
+### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
+1. **Vitest jsdom Realm Issue (`TypeError: Key for the HS256 algorithm must be one of type CryptoKey, KeyObject, JSON Web Key, or Uint8Array. Received an instance of Uint8Array`):**
+   - *สาเหตุ:* โปรเจคตั้งค่า `environment: 'jsdom'` เป็นค่าเริ่มต้นใน `vitest.config.ts` ทำให้ `Uint8Array` ที่สร้างจาก `TextEncoder` ใน test environment อยู่คนละ realm กับ `Uint8Array` ใน package `jose` ที่โหลดผ่าน Node module loader ทำให้การเช็ค `key instanceof Uint8Array` ใน jsdom คืนค่าเป็น `false`
+2. **JWT Subject Claim Type Error (`TypeError: "sub" claim must be a string`):**
+   - *สาเหตุ:* โมเดล `User` ใน Prisma schema มีฟิลด์ `id` เป็นตัวเลข auto-increment (`Int`) แต่เมธอด `setSubject()` ใน `jose` บังคับรับค่าเป็น `string`
+3. **Zod v4 Error Structure (`TypeError: Cannot read properties of undefined (reading '0')`):**
+   - *สาเหตุ:* โค้ดเดิมพยายามเข้าถึง `parseResult.error.errors[0]` แต่ Zod v4 ในโปรเจคเก็บข้อผิดพลาดไว้ใน array `parseResult.error.issues`
+
+### 3. วิธีการแก้ไข (Solutions & Fixes)
+1. ระบุ docblock `/** @vitest-environment node */` ที่ส่วนหัวของไฟล์ `src/__tests__/auth-api.test.ts` เพื่อให้ API test รันบน native Node environment อย่างถูกต้องและตรงตามการทำงานจริงของ Backend
+2. แปลง `user.id` เป็น string ด้วย `String(user.id)` ใน `POST /api/auth/login` และใส่ `String(payload.sub)` ป้องกันใน `signSession`
+3. ปรับการดึง error message จาก Zod ให้ปลอดภัยด้วย optional chaining: `parseResult.error.issues?.[0]?.message || parseResult.error.errors?.[0]?.message || messages.auth.invalidCredentials`
+
+### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
+- `npx vitest run src/__tests__/auth-api.test.ts`: ผ่านทั้งหมด 22/22 tests (100%)
+- `npm test`: ผ่านทั้งหมด 16 test files / 139 tests (100% Passed โดยไม่กระทบ regression เดิม)
+- `npm run lint`: ผ่าน 0 errors, 0 warnings
+- ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
+
+---
+*(Part 3: Phase 12 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
