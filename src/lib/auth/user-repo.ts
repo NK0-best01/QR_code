@@ -14,3 +14,13 @@ export async function findUserByUsername(username: string): Promise<User | null>
     where: { username: normalized },
   });
 }
+
+export async function findUserById(id: number): Promise<User | null> {
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+  return prisma.user.findUnique({
+    where: { id },
+  });
+}
+

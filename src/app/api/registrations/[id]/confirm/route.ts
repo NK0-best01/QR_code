@@ -7,6 +7,7 @@ import {
   AlreadyRegisteredError,
   PinOutsideProvinceError,
 } from "@/lib/registration-repo";
+import { findUserById, findUserByUsername } from "@/lib/auth/user-repo";
 
 const coordsSchema = z.object({
   latitude: z
@@ -59,7 +60,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   const { latitude, longitude } = parseResult.data;
-  const actorId = parseInt(session.sub, 10);
+  let actorId = parseInt(session.sub, 10);
+  const userById = await findUserById(actorId);
+  if (!userById) {
+    const userByName = await findUserByUsername(session.username);
+    if (!userByName) {
+      return NextResponse.json({ error: "ไม่พบบัญชีผู้ใช้ในระบบ" }, { status: 401 });
+    }
+    actorId = userByName.id;
+  }
 
   // 4. Atomic Confirmation Execution
   try {
