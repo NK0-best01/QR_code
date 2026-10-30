@@ -132,7 +132,23 @@
    - **แหล่งที่มาข้อมูล & License:** เลือกใช้ชุดข้อมูล `thailand.json` จาก [apisit/thailand.json](https://github.com/apisit/thailand.json) (Open Data / MIT License) ครบทั้ง 77 จังหวัด (69 Polygon, 8 MultiPolygon รวมถึงบึงกาฬและกรุงเทพมหานคร)
    - **การจับคู่ชื่อภาษาไทย:** จับคู่ชื่อภาษาอังกฤษเข้ากับชื่อภาษาไทยทั้ง 77 จังหวัดใน `src/data/thai-regions.ts` ครบถ้วน 100% ไม่มีขาด/เกิน
    - **Planar Ray-Casting Algorithm:** เลือกใช้อัลกอริทึม Ray-Casting แบบ Planar แทน spherical projection (d3-geo) เพื่อป้องกันปัญหาเรื่อง winding order (ลำดับการวนขอบเขต) และรองรับทั้ง Polygon เดี่ยว และ MultiPolygon (จังหวัดเกาะ) ได้อย่างแม่นยำ
-   - **O(1) Bounding Box Pre-filter & In-Memory Cache:** คำนวณ Bounding Box (`bbox`: `[minLng, minLat, maxLng, maxLat]`) และ Representative Internal Point (`sample_point`) บันทึกไว้ล่วงหน้า และทำ in-memory index บนโมดูล ทำให้การเช็คพิกัดอยู่นอกจังหวัดเสร็จใน O(1) ทันที (Benchmark 1,000 requests < 40ms)
+8. **Status Pipeline & Atomicity (Phase 14):**
+   - **Schema Extension:** ขยายโมเดล `Registration` ให้มี `status` (`UNREGISTERED`, `REGISTERED`), `latitude`, `longitude`, `confirmedAt`, `confirmedById`
+   - **Append-Only Audit Log:** สร้างโมเดล `RegistrationPinLog` เก็บ `action` (`CONFIRM`, `UPDATE`), `actorId`, `oldLat`, `oldLng`, `newLat`, `newLng`, `createdAt` ผูก foreign key กับ `User` และ `Registration`
+   - **Atomic Confirmation:** ใช้ `$transaction` อัปเดตพิกัด/สถานะ พร้อมบันทึก log ในก้อนเดียวกัน ป้องกัน log หลุดเมื่อพิกัดเปลี่ยน หรือพิกัดเปลี่ยนโดยไม่มี log
+9. **Dashboard UI & Responsive Filter (Phase 15):**
+   - **Dynamic Portal Layout:** ใช้ `PortalSidebar` นำทางระหว่าง Dashboard, แผนที่, และสแกน QR
+   - **Public QR Route Enhancement:** สำหรับหน้า `/` และ `/register` จะยังคงเข้าถึงได้แบบสาธารณะ 100% แต่หากมีผู้ใช้ล็อกอินอยู่ ระบบจะแสดง Sidebar เพิ่มความสะดวกในการสลับกลับแดชบอร์ด
+   - **Direct Filter Buttons:** ปุ่มกรองสถานะแสดงตัวเลขสรุปยอด (`ทั้งหมด`, `ยังไม่ลงทะเบียน`, `ลงทะเบียนแล้ว`) อัปเดตตามข้อมูลจริง
+10. **Thailand Map & Coordinate Math (Phase 16):**
+    - **Offline-First Vector Map:** ใช้ `react-simple-maps` v5 ร่วมกับ `d3-geo` วาดแผนที่จาก GeoJSON ภายในเครื่อง (`src/data/thailand-provinces.json`) โดยไม่มีการเรียก Network ภายนอกแม้แต่คำขอเดียว
+    - **Geographic Mercator Projection & Click-to-Coordinate:** พัฒนา `src/lib/map-coords.ts` กำหนด center ที่พิกัด [100.5, 13.5] สเกลมาตรฐาน 2800 พร้อมฟังก์ชันคำนวณย้อนกลับจาก SVG Container ViewBox ไปเป็น Lat/Lng ได้อย่างแม่นยำ
+    - **Pin Visual Distinction & Accessibility:** แยกแยะหมุดจริง (หมุดทึบสีน้ำเงินพร้อมเงา), หมุดพรีวิวใหม่ (หมุดสีเหลืองอำพันมีขอบและไอคอนเป้าเล็ง), และหมุดตำแหน่งเดิม (สีจาง 40% พร้อมป้ายข้อความกำกับ) เพื่อให้ผู้ใช้ทุกระดับการมองเห็นและผู้ใช้คีย์บอร์ดเข้าถึงได้สมบูรณ์ (WCAG AA 100%)
+11. **Security & Production Readiness (Phase 17):**
+    - **Zero Password Leakage:** รหัสผ่านถูกแฮชด้วย Argon2 ในระดับฐานข้อมูล และถูกตัดออกจากทุก DTO/Select query
+    - **Non-Routable IP Sanitization:** แก้ปัญหา Host redirect `0.0.0.0` ที่เกิดจาก Next.js dev server โดยดึง header `host` / `x-forwarded-host` และแปลงเป็น `localhost` ป้องกัน `ERR_ADDRESS_INVALID`
+    - **Multi-Role Concurrency & Race-Condition Safety:** E2E ทดสอบยืนยันว่า Admin 2 คนยืนยันการปักหมุดพร้อมกัน คนแรกจะสำเร็จและคนที่สองจะได้รับข้อความแจ้งเตือน "ถูกยืนยันไปแล้ว" (HTTP 409 Conflict) อย่างถูกต้อง ปลอดภัย และไม่เกิดข้อมูลชนกัน
+
 
 
 

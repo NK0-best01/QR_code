@@ -524,9 +524,9 @@ e2e/helpers/auth.ts                     # login helper + storageState ต่อ 
 | `/` ใช้งานได้ปกติทั้งตอนไม่มี/มี/มี cookie เสีย | ✅ | ✅ |
 | Session หมดอายุ (24 ชม.) ระหว่างใช้งาน → ได้ 401/redirect ที่จัดการได้ ไม่ crash | ✅ | ✅ |
 
-- [ ] CI ผ่านทั้งหมด; production build ไม่มี warning สำคัญ
-- [ ] test ชุดเดิม Phase 0–9 ผ่าน 100% (ไม่ถูกลบหรือ skip)
-- [ ] (Manual) ทดสอบ login/dashboard/ปัก-แก้ pin บนมือถือจริง 1 เครื่อง บันทึกใน `MANUAL_TESTS.md`
+- [x] CI ผ่านทั้งหมด; production build ไม่มี warning สำคัญ
+- [x] test ชุดเดิม Phase 0–9 ผ่าน 100% (ไม่ถูกลบหรือ skip)
+- [ ] (Manual) ทดสอบ login/dashboard/ปัก-แก้ pin บนมือถือจริง 1 เครื่อง บันทึกใน `MANUAL_TESTS.md` (เตรียมพร้อมสำหรับผู้ใช้ตรวจสอบบนเครื่องจริง)
 
 ---
 

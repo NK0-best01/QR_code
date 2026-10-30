@@ -427,5 +427,39 @@
 - ติ๊ก Checklist Phase 16 ครบถ้วนใน [PLAN/PROJECT_PLAN_AUTH_MAP.md](file:///d:/Ai/โปรเจค_roboq/QRcode/PLAN/PROJECT_PLAN_AUTH_MAP.md)
 
 ---
-*(ต่อไป: Phase 17 — Full Regression, Security Audit Checklist, และ Final Documentation Wrap-up)*
+---
+
+## [2026-10-30] Part 8: Phase 17 — Full Regression, Security Audit, and Final Documentation Wrap-up
+
+### 1. รายละเอียดการทำงาน (Implementation Details)
+1. **Full Regression Verification Across Environments:**
+   - รัน Unit and Integration Test ทั้งหมด 23 ไฟล์ (214 tests ผ่าน 100%)
+   - รัน Linter ทั้งระบบ (`npm run lint`) ผ่าน 0 errors, 0 warnings
+   - รัน Next.js Production Build (`npm run build`) ผ่าน 100% ครอบคลุมทั้ง Static Pages และ Dynamic API/SSR routes
+   - รัน Playwright E2E Test Suite ทั้งหมด 58 tests ทั้งโหมด Desktop (1280x800) และ Mobile Viewport (390x844) ผ่าน 100%
+2. **Security Checklist Audit:**
+   - **Zero Raw Password Leakage:** รหัสผ่านถูกแฮชด้วย Argon2 ปลอดภัย ไม่ปรากฏใน DB แบบ plaintext, ไม่หลุดใน log, response หรือ error
+   - **Public Isolation:** หน้า `/` และ `/register` สามารถใช้งานได้แบบสาธารณะ 100% โดยไม่อ่านหรือบังคับใช้คุกกี้เซสชัน
+   - **Strict Access Control:** หน้าและ API ที่ต้องใช้สิทธิ์ส่งคืน 401 Unauthorized, 403 Forbidden หรือ Redirect อย่างถูกต้อง
+   - **Immutable Client State:** ไม่อนุญาตให้ตั้งสถานะ `REGISTERED` หรือพิกัดผ่าน Endpoint สาธารณะ (ต้องทำผ่าน Admin เท่านั้น)
+   - **Strict Geo-fencing Enforcement:** ตรวจสอบพิกัดให้อยู่ในขอบเขต 77 จังหวัดจริงทั้งฝั่ง Client และ Server (400 `PIN_OUTSIDE_PROVINCE`)
+   - **Append-only Audit Log:** การยืนยันและแก้ไขพิกัดถูกบันทึกลงตาราง `RegistrationPinLog` ภายใน transaction เดียวกัน และป้องกันไม่ให้ผู้ใช้ทั่วไปเข้าถึง
+   - **Session & Cookie Security:** คุกกี้เซสชันกำหนด `HttpOnly`, `SameSite=Lax`, `Secure` (เมื่อใช้ HTTPS) พร้อมระยะเวลาหมดอายุ 24 ชม.
+   - **External Link Hardening:** ลิงก์ภายนอกทั้งหมด (Google Maps) มีการกำหนด `rel="noopener noreferrer"` ครบถ้วน
+   - **Anti-DoS Protection:** ป้องกันการโจมตีด้วย In-memory Sliding Window Rate Limiting และ Payload Size Guard
+3. **การอัปเดตเอกสารระบบ (Documentation Updates):**
+   - อัปเดต [README.md](file:///d:/Ai/โปรเจค_roboq/QRcode/README.md) สรุปภาพรวมระบบ, แผนผังสิทธิ์ (Route & Role Matrix), บัญชีตัวอย่าง, และคำสั่งรันระบบ
+   - อัปเดต [DECISIONS.md](file:///d:/Ai/โปรเจค_roboq/QRcode/DECISIONS.md) เพิ่มบันทึกการตัดสินใจทางสถาปัตยกรรม Phase 14–17
+   - อัปเดต [DEPLOY_CHECKLIST.md](file:///d:/Ai/โปรเจค_roboq/QRcode/DEPLOY_CHECKLIST.md) เพิ่มข้อกำหนดด้านความปลอดภัย, PostgreSQL migration, และ Production Pre-flight checklist
+   - อัปเดต [MANUAL_TESTS.md](file:///d:/Ai/โปรเจค_roboq/QRcode/MANUAL_TESTS.md) เพิ่มคู่มือและขั้นตอนการตรวจสอบด้วยตนเองสำหรับระบบ Auth, Dashboard และ Thailand Map
+   - อัปเดต [PLAN/PROJECT_PLAN_AUTH_MAP.md](file:///d:/Ai/โปรเจค_roboq/QRcode/PLAN/PROJECT_PLAN_AUTH_MAP.md) ติ๊ก Checklist สมบูรณ์ครบทุก Phase (Phase 10–17)
+
+### 2. สรุปผลการทดสอบทั้งหมด (Project Verification Scorecard)
+- **Unit & Integration Tests:** 23 files / 214 tests passed (100%)
+- **Playwright E2E Tests:** 58 tests passed (100%)
+- **ESLint:** 0 errors, 0 warnings (100% clean)
+- **Next.js Production Build:** ผ่านฉลุย 100%
+- **Accessibility:** ผ่านเกณฑ์ WCAG 2.1 AA (0 violations via `@axe-core/playwright`)
+- **Git Status:** Commit และ Push ขึ้น Repository ครบถ้วนทุก Branch
+
 

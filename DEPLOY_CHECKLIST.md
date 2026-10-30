@@ -73,10 +73,28 @@
 
 ---
 
-## 6. Pre-flight Verification Steps
+## 6. ข้อกำหนดด้านความปลอดภัยและส่วนขยาย Phase 10–17 (Auth, Dashboard & Map)
 
-- [ ] รัน `npm run lint` ผ่าน 100% 0 errors
-- [ ] รัน `npm test` ผ่านครบทุก unit/integration tests (15 test files / 112 tests)
-- [ ] รัน `npm run test:e2e` ผ่านครบทุก E2E tests (8 test files / 35 tests)
-- [ ] รัน `npm run build` ผ่าน 100% ไม่มี dynamic code leakage
-- [ ] ทดสอบรัน Production Mode ในเครื่องด้วย `npm run start`
+- **AUTH_SECRET ใน Production:**
+  - ต้องสร้างคีย์สุ่มความยาวไม่ต่ำกว่า 32 ไบต์ (เช่น ด้วยคำสั่ง `openssl rand -base64 32`) และกำหนดใน `.env.production`
+  - ห้ามใช้ Default Secret หรือปล่อยว่างเด็ดขาด
+- **ปิดการใช้งาน Seed บัญชีตัวอย่างใน Production:**
+  - สคริปต์ `prisma/seed.ts` มีการตรวจสอบ `NODE_ENV === 'production'` และจะยกเลิกการทำงานทันที
+  - ลบบัญชีตัวอย่าง `admin1` / `user1` หรือเปลี่ยนรหัสผ่านทันทีหลังขึ้นระบบจริง
+- **การ Migrate ตารางใหม่สู่ PostgreSQL:**
+  - ตาราง `User`, `Session`, `RegistrationPinLog` และฟิลด์ใหม่ใน `Registration` (`status`, `latitude`, `longitude`, `confirmedAt`, `confirmedById`) ต้องรัน migration บน PostgreSQL ผ่าน `npx prisma migrate deploy`
+  - ยืนยันว่า Foreign Key และ Index บน `RegistrationPinLog` (`registrationId`, `actorId`, `createdAt`) สร้างอย่างถูกต้อง
+- **การทดสอบ Concurrency บน PostgreSQL:**
+  - ทดสอบกรณี Admin ปักหมุด/ยืนยันข้อมูลเดียวกันพร้อมกันด้วย Row-level locking บน PostgreSQL
+  - ยืนยันว่า Transaction Rollback ไม่ก่อให้เกิดข้อมูลตกหล่น
+
+---
+
+## 7. Pre-flight Verification Steps
+
+- [x] รัน `npm run lint` ผ่าน 100% 0 errors, 0 warnings
+- [x] รัน `npm test` ผ่านครบทุก unit/integration tests (23 test files / 214 tests)
+- [x] รัน `npx playwright test` ผ่านครบทุก E2E tests (58 tests)
+- [x] รัน `npm run build` ผ่าน 100% ไม่มี dynamic code leakage
+- [x] ตรวจสอบ Security Checklist: ไม่มีรหัสผ่านรั่วไหล, พิกัดนอกจังหวัดถูกบล็อก, Rate limiting ทำงาน
+
