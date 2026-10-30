@@ -167,4 +167,33 @@ test.describe('Phase 12 E2E: Auth, Route Guards & Public Route Isolation', () =>
     await page.goto('/dashboard');
     await page.waitForURL('**/login?next=%2Fdashboard');
   });
+
+  // Rule 8: Authenticated user visiting / shows PortalSidebar
+  test('Authenticated /: เข้าสู่ระบบแล้วไปที่ "/" → แสดง PortalSidebar และซ่อนปุ่มเข้าสู่ระบบ', async ({
+    page,
+    context,
+  }) => {
+    await setAuthCookie(context, 'user', 'user1');
+    await page.goto('/');
+
+    // Sidebar elements should be visible
+    const sidebarUsername = page.locator('[data-testid="sidebar-username"]');
+    await expect(sidebarUsername).toBeVisible();
+    await expect(sidebarUsername).toHaveText('user1');
+
+    // Link to scan QR should be active
+    const scanQrLink = page.locator('[data-testid="link-sidebar-scan-qr"]');
+    await expect(scanQrLink).toHaveAttribute('aria-current', 'page');
+
+    // Guest login link should be hidden
+    await expect(page.locator('#link-staff-login')).not.toBeVisible();
+  });
+
+  test('Guest /: ยังไม่ได้เข้าสู่ระบบ → ไม่แสดง PortalSidebar แต่แสดงปุ่มเข้าสู่ระบบ', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.locator('[data-testid="sidebar-username"]')).not.toBeVisible();
+    await expect(page.locator('#link-staff-login')).toBeVisible();
+  });
 });

@@ -359,9 +359,13 @@
    - จัดวาง Grid แสดงการ์ด 12 รายการต่อหน้า พร้อมระบบแบ่งหน้า (Previous / Next / Page Indicator)
    - เชื่อมโยง URL search parameter `?status=` และ `?page=`
    - ปฏิบัติตามมาตรฐาน Read-Only ของ Dashboard (ไม่มี mutation เกิดขึ้นในหน้านี้)
-7. **Comprehensive Test Suite:**
+7. **PortalSidebar Integration for Scan QR & Register (`src/app/page.tsx`, `src/app/register/page.tsx`, `src/components/ScanClient.tsx`, `src/components/RegisterClient.tsx`):**
+   - ตรวจสอบ Session แบบ Dynamic ในหน้า `/` และ `/register`
+   - หากผู้ใช้ล็อกอินอยู่ (`user` หรือ `admin`): แสดง `PortalSidebar` ทั้งแบบ Desktop และ Mobile Drawer พร้อมสถานะ Active บนเมนู "ไปหน้าสแกน QR" และซ่อนปุ่ม "เข้าสู่ระบบเจ้าหน้าที่"
+   - หากเป็น Guest ทั่วไป: แสดงหน้า Standalone แบบดั้งเดิม 100% รักษาหลัก Public Isolation
+8. **Comprehensive Test Suite:**
    - Unit & Component tests (`src/__tests__/portal-dashboard-components.test.tsx`): 10 tests ครอบคลุม Sidebar role isolation, Mobile drawer, StatusFilterButtons, RegistrationCard, และ DashboardClient states
-   - E2E tests (`e2e/dashboard-flow.spec.ts`): 5 scenarios ครอบคลุม User flow, Admin flow, Public registration to dashboard integration, Mobile 390x844 responsive, และ Axe Accessibility WCAG 2.1 AA
+   - E2E tests (`e2e/auth-route-guards.spec.ts` & `e2e/dashboard-flow.spec.ts`): ทดสอบทั้ง Authenticated Sidebar บนหน้า `/` และ Guest isolation
 
 ### 2. ปัญหาและ Error ที่พบระหว่างทาง (Issues Encountered)
 1. **TypeScript Literal Infer ใน `navItems`:**
@@ -386,11 +390,12 @@
 3. ปรับสีฟอนต์เป็น `text-zinc-600 dark:text-zinc-400` และ `text-zinc-700` ทำให้มี Contrast Ratio เกิน 4.5:1 (ผ่านเกณฑ์ WCAG AA 100%)
 4. ปรับโครงสร้าง Effect ใน `DashboardClient.tsx` ให้ใช้ async loader pattern และอัปเดต State เมื่อ Promise สำเร็จหรือล้มเหลวแบบ asynchronous
 5. ปรับการ Resolve Origin ใน `POST /api/auth/logout` และ `handleAuthMiddleware` ให้ตรวจจับ Header `host` และ `x-forwarded-host` จากการเข้าใช้งานจริง และป้องกันการนำทางไปที่ `0.0.0.0` โดยแปลงเป็น `localhost` เสมอ
+6. แยก Client Logic สำหรับหน้า `/` และ `/register` เป็น `ScanClient` และ `RegisterClient` พร้อมกำหนด `export const dynamic = 'force-dynamic'` เพื่อให้ Server Component ตรวจจับคุกกี้ Session และเรนเดอร์ `PortalSidebar` ให้กับผู้ใช้ที่ล็อกอินได้อย่างแม่นยำ
 
 ### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
 - **Unit & Integration Tests (`npm test`):** ผ่าน **21 test files / 195 tests (100% Passed)**
-- **Playwright E2E Tests (`npx playwright test`):** ผ่าน **51 tests (100% Passed)**
-- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% รัน SSG และ Route Manifest ครบทุกหน้า
+- **Playwright E2E Tests (`npx playwright test`):** ผ่าน **53 tests (100% Passed)**
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100% รัน SSG และ Dynamic Routes ครบทุกหน้า
 - **Lint Check (`npm run lint`):** ผ่าน **0 errors, 0 warnings**
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 

@@ -177,27 +177,43 @@ export default function PortalSidebar({ username, role }: PortalSidebarProps) {
             </Link>
           ))}
 
-          {/* Link to public QR scan */}
-          <Link
-            href="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition"
-          >
-            <svg
-              className="w-5 h-5 text-zinc-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-              />
-            </svg>
-            <span>{messages.portal.scanQr}</span>
-          </Link>
+          {/* Link to public/authenticated QR scan */}
+          {(() => {
+            const isScanActive = pathname === "/" || pathname.startsWith("/register");
+            return (
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                aria-current={isScanActive ? "page" : undefined}
+                id="link-sidebar-scan-qr"
+                data-testid="link-sidebar-scan-qr"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition ${
+                  isScanActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-semibold shadow-xs"
+                    : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <svg
+                  className={`w-5 h-5 ${
+                    isScanActive
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-zinc-500 dark:text-zinc-400"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  />
+                </svg>
+                <span>{messages.portal.scanQr}</span>
+              </Link>
+            );
+          })()}
         </nav>
       </div>
 

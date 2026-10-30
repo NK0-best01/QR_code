@@ -8,13 +8,16 @@ export async function POST(request?: NextRequest) {
   // If submitted via standard HTML <form action="/api/auth/logout" method="POST">, redirect to /login
   if (acceptHeader.includes("text/html") && request) {
     const hostHeader = request.headers.get("x-forwarded-host") || request.headers.get("host");
-    const proto = request.headers.get("x-forwarded-proto") || (request.url.startsWith("https") ? "https" : "http");
+    const proto = request.headers.get("x-forwarded-proto");
 
     let redirectBase: URL;
     try {
       redirectBase = new URL(request.url);
       if (hostHeader) {
         redirectBase.host = hostHeader;
+      }
+      if (proto) {
+        redirectBase.protocol = proto.endsWith(":") ? proto : `${proto}:`;
       }
       if (redirectBase.hostname === "0.0.0.0") {
         redirectBase.hostname = "localhost";
