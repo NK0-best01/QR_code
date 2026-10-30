@@ -1,50 +1,45 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth/session";
-import Link from "next/link";
+import React, { Suspense } from 'react';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { verifySession, SESSION_COOKIE_NAME } from '@/lib/auth/session';
+import AdminMapClient from '@/components/AdminMapClient';
 
-export default async function AdminMapPage() {
+export const dynamic = 'force-dynamic';
+
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function AdminMapPage({ searchParams }: PageProps) {
+  // 1. Session and Role Guard (Server-Side)
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const session = token ? await verifySession(token) : null;
 
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
-  if (session.role !== "admin") {
-    redirect("/dashboard");
+  if (session.role !== 'admin') {
+    redirect('/dashboard');
   }
+
+  // 2. Parse query parameters
+  const resolvedSearchParams = await searchParams;
+  const rawId = resolvedSearchParams.registrationId;
+  const parsedId =
+    typeof rawId === 'string' && /^\d+$/.test(rawId) ? parseInt(rawId, 10) : null;
 
   return (
-    <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6">
-      <header className="flex items-center justify-between pb-6 border-b border-zinc-200 dark:border-zinc-800">
-        <div>
-          <h1
-            data-testid="admin-map-heading"
-            className="text-2xl font-bold tracking-tight"
-          >
-            แผนที่ปักหมุดอุปกรณ์ (Admin Map - Phase 12 Placeholder)
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            ระบบแผนที่จะพัฒนาตัวแสดงผลและปักหมุดใน Phase 16
-          </p>
+    <Suspense
+      fallback={
+        <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3" />
+          <div>กำลังโหลดข้อมูลแผนที่...</div>
         </div>
-
-        <Link
-          href="/dashboard"
-          data-testid="link-back-dashboard"
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition"
-        >
-          ← กลับหน้าแดชบอร์ด
-        </Link>
-      </header>
-
-      <main className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          เข้าถึงสำเร็จเฉพาะผู้ดูแลระบบ (Role: admin)
-        </p>
-      </main>
-    </div>
+      }
+    >
+      <AdminMapClient initialRegistrationId={parsedId} />
+    </Suspense>
   );
 }

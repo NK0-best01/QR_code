@@ -400,4 +400,32 @@
 - ติ๊ก Checklist ครบถ้วนใน `PLAN/PROJECT_PLAN_AUTH_MAP.md`
 
 ---
-*(Part 7: Phase 16 จะถูกบันทึกต่อในหัวข้อถัดไป)*
+
+## [2026-10-30] Part 7: Phase 16 — Thailand Map, Province-Restricted Pinning & Audit History
+
+### 1. รายละเอียดการทำงาน (Implementation Details)
+1. **ติดตั้ง Dependencies และเตรียมแผนที่แบบ Offline:**
+   - ติดตั้ง `react-simple-maps` (v5.0.5) และ `d3-geo` พร้อม `@types/d3-geo`
+   - ใช้ข้อมูล GeoJSON 77 จังหวัดจากไฟล์ในระบบ [src/data/thailand-provinces.json](file:///d:/Ai/โปรเจค_roboq/QRcode/src/data/thailand-provinces.json) (Zero external network requests / 100% offline & self-contained)
+2. **ระบบพิกัดและการแปลงค่า (Map Projections & Geo-math):**
+   - พัฒนา [src/lib/map-coords.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/lib/map-coords.ts) สำหรับ projection Mercator ของประเทศไทย และการแปลงพิกัด SVG <-> Lat/Lng
+   - พัฒนา Unit tests [src/__tests__/map-coords.test.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/__tests__/map-coords.test.ts) (11 tests ผ่าน 100%)
+3. **คอมโพเนนต์และการแสดงผล (Interactive Map & Audit Log UI):**
+   - พัฒนา [src/components/PinHistoryList.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/components/PinHistoryList.tsx) แสดงประวัติการปัก/แก้ไขพิกัด (`CONFIRM`, `UPDATE`) เรียงลำดับใหม่สุดก่อน พร้อมชื่อผู้แก้ไขและพิกัดเดิม→ใหม่
+   - พัฒนา [src/components/ThailandMap.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/components/ThailandMap.tsx) วาดแผนที่ 77 จังหวัด, แสดงหมุดจริง (REGISTERED), หมุดตัวอย่าง (Preview), และหมุดตำแหน่งเดิมแบบจาง
+   - พัฒนา [src/components/AdminMapClient.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/components/AdminMapClient.tsx) รองรับ View Mode, Pin Placement Mode, และ Edit Pin Mode พร้อมตรวจสอบขอบเขตจังหวัดทั้งฝั่ง Client และ Server (`isPointInProvince`)
+   - พัฒนา [src/app/(portal)/admin/map/page.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/app/(portal)/admin/map/page.tsx) ครอบด้วย Suspense และป้องกันสิทธิ์สำหรับ Admin เท่านั้น
+4. **การทดสอบความถูกต้องและ Accessibility (Unit, E2E & A11y):**
+   - พัฒนา Unit tests [src/__tests__/portal-map-components.test.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/__tests__/portal-map-components.test.tsx) (8 tests ผ่าน 100%)
+   - พัฒนา E2E tests [e2e/map-flow.spec.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/e2e/map-flow.spec.ts) ครอบคลุม Security & Role-based redirect, View Mode, Pin placement, Edit pin, Audit log, และ WCAG 2.1 AA (axe-core)
+
+### 2. ผลลัพธ์การทดสอบ (Test Verification)
+- **Unit & Integration Tests (`npm test`):** ผ่าน **23 test files / 214 tests (100% Passed)**
+- **ESLint (`npm run lint`):** ผ่าน **0 errors, 0 warnings (100% Clean)**
+- **Next.js Production Build (`npm run build`):** ผ่านฉลุย 100%
+- **Playwright E2E Tests (`npx playwright test`):** ผ่านครบ **58 tests (100% Passed)**
+- ติ๊ก Checklist Phase 16 ครบถ้วนใน [PLAN/PROJECT_PLAN_AUTH_MAP.md](file:///d:/Ai/โปรเจค_roboq/QRcode/PLAN/PROJECT_PLAN_AUTH_MAP.md)
+
+---
+*(ต่อไป: Phase 17 — Full Regression, Security Audit Checklist, และ Final Documentation Wrap-up)*
+

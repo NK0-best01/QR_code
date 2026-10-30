@@ -11,6 +11,9 @@ if (!process.env.AUTH_SECRET) {
 
 import { signSession } from '../../src/lib/auth/session';
 
+import { PrismaClient } from '@prisma/client';
+const helperPrisma = new PrismaClient();
+
 export async function loginViaUi(
   page: Page,
   username = 'admin1',
@@ -27,8 +30,25 @@ export async function setAuthCookie(
   context: BrowserContext,
   role: 'admin' | 'user' = 'admin',
   username = role === 'admin' ? 'admin1' : 'user1',
-  sub = role === 'admin' ? '1' : '2'
+  customSub?: string
 ) {
+  let sub = customSub;
+  if (!sub) {
+    try {
+      const user = await helperPrisma.user.findUnique({
+        where: { username },
+      });
+      if (user) {
+        sub = String(user.id);
+      }
+    } catch {
+      // fallback if DB not reachable
+    }
+    if (!sub) {
+      sub = role === 'admin' ? '1' : '2';
+    }
+  }
+
   const token = await signSession({
     sub,
     username,
