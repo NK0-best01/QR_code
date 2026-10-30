@@ -6,8 +6,24 @@ export async function POST(request?: NextRequest) {
   const acceptHeader = request?.headers.get("accept") || "";
 
   // If submitted via standard HTML <form action="/api/auth/logout" method="POST">, redirect to /login
-  if (acceptHeader.includes("text/html") && request?.url) {
-    const loginUrl = new URL("/login", request.url);
+  if (acceptHeader.includes("text/html") && request) {
+    const hostHeader = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const proto = request.headers.get("x-forwarded-proto") || (request.url.startsWith("https") ? "https" : "http");
+
+    let redirectBase: URL;
+    try {
+      redirectBase = new URL(request.url);
+      if (hostHeader) {
+        redirectBase.host = hostHeader;
+      }
+      if (redirectBase.hostname === "0.0.0.0") {
+        redirectBase.hostname = "localhost";
+      }
+    } catch {
+      redirectBase = new URL("http://localhost:3000");
+    }
+
+    const loginUrl = new URL("/login", redirectBase);
     const response = NextResponse.redirect(loginUrl, 303);
     response.headers.set("Set-Cookie", clearCookieHeader);
     return response;

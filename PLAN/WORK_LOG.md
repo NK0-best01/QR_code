@@ -376,12 +376,16 @@
 4. **React 19 `react-hooks/set-state-in-effect` Linter Error:**
    - *Error:* `Calling setState synchronously within an effect can trigger cascading renders`
    - *สาเหตุ:* ฟังก์ชัน `fetchData` เรียก `setLoading(true)` ในทันทีแบบ synchronous เมื่อ `useEffect` ทำงาน
+5. **Logout / Auth Redirect ติด Non-Routable IP `0.0.0.0` (ERR_ADDRESS_INVALID):**
+   - *Error:* เมื่อกดออกจากระบบ เบราว์เซอร์ขึ้น `This site can't be reached (ERR_ADDRESS_INVALID)` โดย URL เด้งไปที่ `https://0.0.0.0:3000/login`
+   - *สาเหตุ:* เซิร์ฟเวอร์รันด้วยคำสั่ง `next dev -p 3000 -H 0.0.0.0 --experimental-https` ทำให้ค่า `request.url` ผูกกับ host `0.0.0.0:3000` เมื่อใช้ `NextResponse.redirect(new URL('/login', request.url))` จึงคืน URL `0.0.0.0` ซึ่งเบราว์เซอร์ไม่อนุญาตให้นำทางไปหา
 
 ### 3. วิธีการแก้ไข (Solutions & Fixes)
 1. กำหนด interface `NavItem` ที่มี `label: string` ให้กับอาเรย์ `navItems: NavItem[]` อย่างชัดเจน
 2. เพิ่ม `process.loadEnvFile()` ใน `e2e/helpers/auth.ts` เมื่อตรวจพบว่าไม่มี `AUTH_SECRET`
 3. ปรับสีฟอนต์เป็น `text-zinc-600 dark:text-zinc-400` และ `text-zinc-700` ทำให้มี Contrast Ratio เกิน 4.5:1 (ผ่านเกณฑ์ WCAG AA 100%)
 4. ปรับโครงสร้าง Effect ใน `DashboardClient.tsx` ให้ใช้ async loader pattern และอัปเดต State เมื่อ Promise สำเร็จหรือล้มเหลวแบบ asynchronous
+5. ปรับการ Resolve Origin ใน `POST /api/auth/logout` และ `handleAuthMiddleware` ให้ตรวจจับ Header `host` และ `x-forwarded-host` จากการเข้าใช้งานจริง และป้องกันการนำทางไปที่ `0.0.0.0` โดยแปลงเป็น `localhost` เสมอ
 
 ### 4. ผลลัพธ์และการทดสอบ (Results & Test Verification)
 - **Unit & Integration Tests (`npm test`):** ผ่าน **21 test files / 195 tests (100% Passed)**

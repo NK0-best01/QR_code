@@ -83,6 +83,15 @@ export async function evaluateAuthMiddleware(
  */
 export async function handleAuthMiddleware(request: Request): Promise<NextResponse> {
   const url = new URL(request.url);
+  const hostHeader = request.headers.get("x-forwarded-host") || request.headers.get("host");
+
+  if (hostHeader) {
+    url.host = hostHeader;
+  }
+  if (url.hostname === "0.0.0.0") {
+    url.hostname = "localhost";
+  }
+
   const cookieHeader = request.headers.get("cookie");
 
   const result = await evaluateAuthMiddleware(
