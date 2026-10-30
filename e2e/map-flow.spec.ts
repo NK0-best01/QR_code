@@ -153,21 +153,20 @@ test.describe('Phase 16 E2E: Thailand Map, Pinning & Audit History', () => {
     const submitBtn = page.locator('#btn-submit-pin');
     await expect(submitBtn).toBeDisabled();
 
-    // 1. Enter coordinates OUTSIDE Bangkok (e.g. Chiang Mai 18.7883, 98.9853)
-    await page.fill('#input-latitude', '18.7883');
-    await page.fill('#input-longitude', '98.9853');
+    // 1. Enter Google Maps URL OUTSIDE Bangkok (e.g. Chiang Mai 18.7883, 98.9853)
+    await page.fill('#input-google-maps-url', 'https://www.google.com/maps?q=18.7883,98.9853');
 
     // Should show validation error and keep button disabled
     const errorMsg = page.locator('[data-testid="validation-error-outside-province"]');
     await expect(errorMsg).toBeVisible();
     await expect(submitBtn).toBeDisabled();
 
-    // 2. Enter coordinates INSIDE Bangkok (e.g. 13.7563, 100.5018)
-    await page.fill('#input-latitude', '13.7563');
-    await page.fill('#input-longitude', '100.5018');
+    // 2. Enter Google Maps URL INSIDE Bangkok (e.g. 13.7563, 100.5018)
+    await page.fill('#input-google-maps-url', 'https://www.google.com/maps?q=13.7563,100.5018');
 
-    // Validation warning should disappear and submit button becomes enabled
+    // Validation warning should disappear, success badge should appear and submit button becomes enabled
     await expect(errorMsg).not.toBeVisible();
+    await expect(page.locator('[data-testid="badge-inside-province"]')).toBeVisible();
     await expect(submitBtn).toBeEnabled();
 
     // Click submit
@@ -203,8 +202,7 @@ test.describe('Phase 16 E2E: Thailand Map, Pinning & Audit History', () => {
     await expect(page.locator('[data-testid="marker-original-position"]')).toBeVisible();
 
     // Update to slightly shifted valid coordinates still in Chiang Mai (18.7900, 98.9900)
-    await page.fill('#input-latitude', '18.7900');
-    await page.fill('#input-longitude', '98.9900');
+    await page.fill('#input-google-maps-url', 'https://www.google.com/maps?q=18.7900,98.9900');
 
     // Button should now be enabled
     await expect(submitBtn).toBeEnabled();
@@ -213,10 +211,10 @@ test.describe('Phase 16 E2E: Thailand Map, Pinning & Audit History', () => {
     // Success banner
     await expect(page.locator('[data-testid="map-success-banner"]')).toBeVisible();
 
-    // Verify detail panel shows the updated position
+    // Verify detail panel shows the updated position in Chiang Mai
     const detailPanel = page.locator('[data-testid="pin-detail-panel"]');
     await expect(detailPanel).toBeVisible();
-    await expect(detailPanel).toContainText('18.790000, 98.990000');
+    await expect(detailPanel).toContainText('ปักหมุดใน เชียงใหม่ แล้ว');
 
     // Audit logs list should be visible and contain the UPDATE action
     const historyList = page.locator('[data-testid="pin-history-list"]');

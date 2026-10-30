@@ -6,7 +6,7 @@ import messages from '@/lib/messages';
 import { ThailandMap, RegisteredPin } from '@/components/ThailandMap';
 import { PinHistoryList, PinLogItem } from '@/components/PinHistoryList';
 import { isPointInProvince } from '@/lib/province-geo';
-import { buildGoogleMapsUrl } from '@/lib/google-maps';
+import { buildGoogleMapsUrl, parseGoogleMapsUrl } from '@/lib/google-maps';
 
 export interface RegistrationItem {
   id: number;
@@ -36,9 +36,12 @@ export default function AdminMapClient({
   // Selected item for Pinning / Editing
   const [activeItem, setActiveItem] = useState<RegistrationItem | null>(null);
 
-  // Form Coordinates State
-  const [latInput, setLatInput] = useState<string>('');
-  const [lngInput, setLngInput] = useState<string>('');
+  // Form Coordinates & Google Maps URL State
+  const [previewLat, setPreviewLat] = useState<number | null>(null);
+  const [previewLng, setPreviewLng] = useState<number | null>(null);
+  const [googleMapsUrlInput, setGoogleMapsUrlInput] = useState<string>('');
+  const [isResolvingUrl, setIsResolvingUrl] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   // Selected Pin in View Mode (for viewing details & history)
   const [viewPinId, setViewPinId] = useState<number | null>(null);
@@ -55,13 +58,16 @@ export default function AdminMapClient({
     setPinLogs([]);
     setSuccessMessage(null);
     setError(null);
+    setUrlError(null);
 
     if (item.latitude !== null && item.longitude !== null) {
-      setLatInput(item.latitude.toFixed(6));
-      setLngInput(item.longitude.toFixed(6));
+      setPreviewLat(item.latitude);
+      setPreviewLng(item.longitude);
+      setGoogleMapsUrlInput(buildGoogleMapsUrl(item.latitude, item.longitude));
     } else {
-      setLatInput('');
-      setLngInput('');
+      setPreviewLat(null);
+      setPreviewLng(null);
+      setGoogleMapsUrlInput('');
     }
   };
 
@@ -165,24 +171,72 @@ export default function AdminMapClient({
       }));
   }, [registrations]);
 
-  // Parsed coordinates from inputs
-  const parsedLat = parseFloat(latInput);
-  const parsedLng = parseFloat(lngInput);
+  // Handle URL change from user input
+  const handleUrlChange = async (val: string) => {
+    setGoogleMapsUrlInput(val);
+    setUrlError(null);
+
+    const trimmed = val.trim();
+    if (!trimmed) {
+      setPreviewLat(null);
+      setPreviewLng(null);
+      setIsResolvingUrl(false);
+      return;
+    }
+
+    const parseResult = parseGoogleMapsUrl(trimmed);
+
+    if (parseResult.type === 'COORDINATES') {
+      setPreviewLat(parseResult.latitude);
+      setPreviewLng(parseResult.longitude);
+      setIsResolvingUrl(false);
+    } else if (parseResult.type === 'SHORT_LINK') {
+      setIsResolvingUrl(true);
+      try {
+        const res = await fetch('/api/maps/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: parseResult.url }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setUrlError(data.error || messages.map.invalidGoogleMapsUrl);
+          setPreviewLat(null);
+          setPreviewLng(null);
+        } else {
+          setPreviewLat(data.latitude);
+          setPreviewLng(data.longitude);
+        }
+      } catch {
+        setUrlError(messages.map.invalidGoogleMapsUrl);
+        setPreviewLat(null);
+        setPreviewLng(null);
+      } finally {
+        setIsResolvingUrl(false);
+      }
+    } else {
+      setUrlError(messages.map.invalidGoogleMapsUrl);
+      setPreviewLat(null);
+      setPreviewLng(null);
+      setIsResolvingUrl(false);
+    }
+  };
+
   const hasValidNumbers =
-    !isNaN(parsedLat) &&
-    !isNaN(parsedLng) &&
-    Number.isFinite(parsedLat) &&
-    Number.isFinite(parsedLng);
+    previewLat !== null &&
+    previewLng !== null &&
+    Number.isFinite(previewLat) &&
+    Number.isFinite(previewLng);
 
   // Validate province boundary if an item is active
   const isInsideProvince = useMemo(() => {
     if (!activeItem || !hasValidNumbers) return false;
     try {
-      return isPointInProvince(activeItem.province, parsedLat, parsedLng);
+      return isPointInProvince(activeItem.province, previewLat!, previewLng!);
     } catch {
       return false;
     }
-  }, [activeItem, hasValidNumbers, parsedLat, parsedLng]);
+  }, [activeItem, hasValidNumbers, previewLat, previewLng]);
 
   // Check if coordinates changed in edit mode
   const isCoordsChanged = useMemo(() => {
@@ -190,26 +244,35 @@ export default function AdminMapClient({
     if (!hasValidNumbers || activeItem.latitude === null || activeItem.longitude === null)
       return false;
     return (
-      Math.abs(parsedLat - activeItem.latitude) > 0.000001 ||
-      Math.abs(parsedLng - activeItem.longitude) > 0.000001
+      Math.abs(previewLat! - activeItem.latitude) > 0.000001 ||
+      Math.abs(previewLng! - activeItem.longitude) > 0.000001
     );
-  }, [activeItem, hasValidNumbers, parsedLat, parsedLng]);
+  }, [activeItem, hasValidNumbers, previewLat, previewLng]);
 
   // Enable/disable submit button
-  const canSubmit = hasValidNumbers && isInsideProvince && isCoordsChanged && !isSubmitting;
+  const canSubmit =
+    hasValidNumbers &&
+    isInsideProvince &&
+    isCoordsChanged &&
+    !isSubmitting &&
+    !isResolvingUrl;
 
   const handleCancel = () => {
     setActiveItem(null);
-    setLatInput('');
-    setLngInput('');
+    setPreviewLat(null);
+    setPreviewLng(null);
+    setGoogleMapsUrlInput('');
+    setUrlError(null);
     setSuccessMessage(null);
     setError(null);
   };
 
   const handleMapClick = (lat: number, lng: number) => {
     if (!activeItem) return;
-    setLatInput(lat.toFixed(6));
-    setLngInput(lng.toFixed(6));
+    setPreviewLat(lat);
+    setPreviewLng(lng);
+    setGoogleMapsUrlInput(buildGoogleMapsUrl(lat, lng));
+    setUrlError(null);
     setError(null);
   };
 
@@ -223,7 +286,7 @@ export default function AdminMapClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeItem || !canSubmit) return;
+    if (!activeItem || !canSubmit || previewLat === null || previewLng === null) return;
 
     startTransition(async () => {
       try {
@@ -240,8 +303,8 @@ export default function AdminMapClient({
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            latitude: parsedLat,
-            longitude: parsedLng,
+            latitude: previewLat,
+            longitude: previewLng,
           }),
         });
 
@@ -269,8 +332,9 @@ export default function AdminMapClient({
         await fetchRegistrations();
         setViewPinId(activeItem.id);
         setActiveItem(null);
-        setLatInput('');
-        setLngInput('');
+        setPreviewLat(null);
+        setPreviewLng(null);
+        setGoogleMapsUrlInput('');
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
       }
@@ -361,7 +425,7 @@ export default function AdminMapClient({
               selectedPinId={viewPinId}
               onPinSelect={handlePinSelect}
               highlightedProvince={activeItem?.province || null}
-              previewCoords={hasValidNumbers ? [parsedLat, parsedLng] : null}
+              previewCoords={hasValidNumbers ? [previewLat!, previewLng!] : null}
               originalCoords={
                 activeItem?.status === 'REGISTERED' &&
                 activeItem.latitude !== null &&
@@ -460,45 +524,44 @@ export default function AdminMapClient({
 
               {/* Form Input fields */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <label
-                      htmlFor="input-latitude"
-                      className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                    >
-                      {messages.map.latLabel}
-                    </label>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="input-google-maps-url"
+                    className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+                  >
+                    {messages.map.googleMapsUrlLabel}
+                  </label>
+                  <div className="relative">
                     <input
-                      type="number"
-                      id="input-latitude"
-                      data-testid="input-latitude"
-                      step="any"
-                      placeholder="เช่น 13.7563"
-                      value={latInput}
-                      onChange={(e) => setLatInput(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl text-sm border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      type="text"
+                      id="input-google-maps-url"
+                      data-testid="input-google-maps-url"
+                      placeholder={messages.map.googleMapsUrlPlaceholder}
+                      value={googleMapsUrlInput}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      className="w-full pl-3.5 pr-28 py-2.5 rounded-xl text-xs border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                     />
+                    {isResolvingUrl && (
+                      <div className="absolute right-3 top-2.5 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+                        <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[11px] font-medium">กำลังตรวจสอบ...</span>
+                      </div>
+                    )}
                   </div>
-
-                  <div>
-                    <label
-                      htmlFor="input-longitude"
-                      className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                    >
-                      {messages.map.lngLabel}
-                    </label>
-                    <input
-                      type="number"
-                      id="input-longitude"
-                      data-testid="input-longitude"
-                      step="any"
-                      placeholder="เช่น 100.5018"
-                      value={lngInput}
-                      onChange={(e) => setLngInput(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl text-sm border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                    />
-                  </div>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {messages.map.googleMapsUrlHelp}
+                  </p>
                 </div>
+
+                {/* Validation message if invalid URL */}
+                {urlError && (
+                  <div
+                    data-testid="validation-error-invalid-url"
+                    className="p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300 font-medium"
+                  >
+                    ⚠️ {urlError}
+                  </div>
+                )}
 
                 {/* Validation message if outside province */}
                 {hasValidNumbers && !isInsideProvince && (
@@ -507,6 +570,19 @@ export default function AdminMapClient({
                     className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300 font-medium"
                   >
                     ⚠️ {messages.map.pinOutsideProvince} (ต้องอยู่ในจังหวัด {activeItem.province})
+                  </div>
+                )}
+
+                {/* Success badge if valid & inside province */}
+                {hasValidNumbers && isInsideProvince && (
+                  <div
+                    data-testid="badge-inside-province"
+                    className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5"
+                  >
+                    <span>✓</span>
+                    <span>
+                      {messages.map.coordsFoundInProvince} {activeItem.province} เรียบร้อยแล้ว
+                    </span>
                   </div>
                 )}
 
@@ -587,9 +663,9 @@ export default function AdminMapClient({
                 </div>
                 {selectedViewItem.latitude !== null && selectedViewItem.longitude !== null && (
                   <div className="flex justify-between py-1 border-b border-zinc-50 dark:border-zinc-800/60">
-                    <span className="text-zinc-500 dark:text-zinc-400">พิกัดหมุด:</span>
-                    <span className="font-mono text-zinc-900 dark:text-zinc-100">
-                      {selectedViewItem.latitude.toFixed(6)}, {selectedViewItem.longitude.toFixed(6)}
+                    <span className="text-zinc-500 dark:text-zinc-400">สถานะหมุด:</span>
+                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                      ปักหมุดใน {selectedViewItem.province} แล้ว
                     </span>
                   </div>
                 )}

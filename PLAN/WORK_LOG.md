@@ -460,6 +460,23 @@
 - **ESLint:** 0 errors, 0 warnings (100% clean)
 - **Next.js Production Build:** ผ่านฉลุย 100%
 - **Accessibility:** ผ่านเกณฑ์ WCAG 2.1 AA (0 violations via `@axe-core/playwright`)
-- **Git Status:** Commit และ Push ขึ้น Repository ครบถ้วนทุก Branch
+---
+
+## [2026-10-30] Enhancement: Google Maps URL Pinning & Lat/Lng UI Removal
+
+### 1. รายละเอียดการทำงาน (Implementation Details)
+1. **ตัดระบบกรอกตัวเลขละติจูดและลองจิจูดออกจาก UI:**
+   - นำช่องกรอก `#input-latitude` และ `#input-longitude` ออกจากหน้า `/admin/map` ตามความต้องการของผู้ใช้ เพื่อไม่ให้แอดมินต้องสับสนหรือกรอกตัวเลขพิกัดเอง
+   - ปรับการแสดงผลในการ์ดรายละเอียด ให้แสดงสถานะการปักหมุดในจังหวัดแทนการแสดงตัวเลขพิกัดดิบ
+2. **ระบบรับลิงก์แชร์ตำแหน่งจาก Google Maps (`input-google-maps-url`):**
+   - พัฒนาฟังก์ชัน `parseGoogleMapsUrl` และ `extractCoordinatesFromText` ใน [src/lib/google-maps.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/lib/google-maps.ts) รองรับทั้ง URL เต็ม, `?q=`, `@lat,lng`, `!3d!4d`, และพิกัดดิบ
+   - พัฒนา API Route [src/app/api/maps/resolve/route.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/app/api/maps/resolve/route.ts) สำหรับแปลง Short link (`maps.app.goo.gl` หรือ `goo.gl/maps`) ดึงพิกัดจริงฝั่งเซิร์ฟเวอร์อย่างปลอดภัย พร้อม SSRF Protection
+   - เมื่อแอดมินวางลิงก์ ระบบจะดึงพิกัดมาแสดงหมุดพรีวิวบนแผนที่ประเทศไทย 77 จังหวัด และตรวจสอบขอบเขตจังหวัด (`isPointInProvince`) ให้อัตโนมัติทันที
+   - แอดมินยังสามารถคลิกบนแผนที่ได้ โดยระบบจะสร้างลิงก์ Google Maps ให้ลงในช่องให้อัตโนมัติ
+3. **การทดสอบความถูกต้อง (Test Verification):**
+   - Unit tests [src/__tests__/google-maps.test.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/__tests__/google-maps.test.ts) เพิ่มการทดสอบการสกัดพิกัดและ short link ผ่านครบ 10/10 tests
+   - ปรับปรุง [e2e/map-flow.spec.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/e2e/map-flow.spec.ts) ทดสอบการวางลิงก์ Google Maps นอกจังหวัด, ในจังหวัด, และการแก้ไขหมุดผ่านครบ 5/5 tests
+   - ทดสอบ Full Regression (`npm test` 23 files / 221 tests, `npm run lint` 0 errors, Playwright E2E 58 tests) ผ่าน 100%
+
 
 
