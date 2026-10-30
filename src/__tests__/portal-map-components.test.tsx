@@ -82,6 +82,92 @@ describe('Phase 16: Portal Map Components', () => {
       expect(cmGeo).toHaveAttribute('data-highlighted', 'true');
       expect(cmGeo).toHaveAttribute('fill', '#93c5fd');
     });
+
+    it('แสดงปุ่มควบคุมการซูม (Zoom In, Zoom Out, Reset, Zoom Level) ครบถ้วน', () => {
+      render(<ThailandMap registeredPins={[]} />);
+
+      const zoomControls = screen.getByTestId('map-zoom-controls');
+      expect(zoomControls).toBeInTheDocument();
+
+      const btnZoomIn = screen.getByTestId('btn-map-zoom-in');
+      const btnZoomOut = screen.getByTestId('btn-map-zoom-out');
+      const btnReset = screen.getByTestId('btn-map-zoom-reset');
+      const zoomLevel = screen.getByTestId('map-zoom-level');
+
+      expect(btnZoomIn).toBeInTheDocument();
+      expect(btnZoomOut).toBeInTheDocument();
+      expect(btnReset).toBeInTheDocument();
+      expect(zoomLevel).toHaveTextContent('100%');
+
+      // ที่สเกลเริ่มต้น 100%: ปุ่มลดสเกลและปุ่มรีเซ็ตจะถูก disabled
+      expect(btnZoomOut).toBeDisabled();
+      expect(btnReset).toBeDisabled();
+      expect(btnZoomIn).not.toBeDisabled();
+    });
+
+    it('คลิกปุ่ม Zoom In (+) → ขยายสเกล และระดับเปอร์เซ็นต์เพิ่มขึ้น', () => {
+      render(<ThailandMap registeredPins={[]} />);
+
+      const btnZoomIn = screen.getByTestId('btn-map-zoom-in');
+      const btnZoomOut = screen.getByTestId('btn-map-zoom-out');
+      const btnReset = screen.getByTestId('btn-map-zoom-reset');
+      const zoomLevel = screen.getByTestId('map-zoom-level');
+
+      // Zoom In ครั้งที่ 1
+      fireEvent.click(btnZoomIn);
+      expect(zoomLevel).toHaveTextContent('140%');
+      expect(btnZoomOut).not.toBeDisabled();
+      expect(btnReset).not.toBeDisabled();
+      expect(screen.getByTestId('map-drag-hint')).toHaveTextContent(
+        messages.map.dragToPanHint
+      );
+
+      // Zoom In ครั้งที่ 2
+      fireEvent.click(btnZoomIn);
+      expect(zoomLevel).toHaveTextContent('200%');
+    });
+
+    it('คลิกปุ่ม Zoom Out (-) และ Reset (↺) → ลดสเกลและรีเซ็ตกลับเป็น 100%', () => {
+      render(<ThailandMap registeredPins={[]} />);
+
+      const btnZoomIn = screen.getByTestId('btn-map-zoom-in');
+      const btnZoomOut = screen.getByTestId('btn-map-zoom-out');
+      const btnReset = screen.getByTestId('btn-map-zoom-reset');
+      const zoomLevel = screen.getByTestId('map-zoom-level');
+
+      // ซูมเข้า 2 ครั้ง (100% -> 140% -> 200%)
+      fireEvent.click(btnZoomIn);
+      fireEvent.click(btnZoomIn);
+      expect(zoomLevel).toHaveTextContent('200%');
+
+      // ซูมออก 1 ครั้ง (200% -> 140%)
+      fireEvent.click(btnZoomOut);
+      expect(zoomLevel).toHaveTextContent('140%');
+
+      // กดปุ่มรีเซ็ต (Reset)
+      fireEvent.click(btnReset);
+      expect(zoomLevel).toHaveTextContent('100%');
+      expect(btnZoomOut).toBeDisabled();
+      expect(btnReset).toBeDisabled();
+      expect(screen.queryByTestId('map-drag-hint')).toBeNull();
+    });
+
+    it('จำกัดการซูมสูงสุดที่ 400% และปุ่ม Zoom In จะถูก disabled เมื่อถึงขีดจำกัด', () => {
+      render(<ThailandMap registeredPins={[]} />);
+
+      const btnZoomIn = screen.getByTestId('btn-map-zoom-in');
+      const zoomLevel = screen.getByTestId('map-zoom-level');
+
+      // กด Zoom In หลายครั้งจนถึงขีดจำกัด 400%
+      for (let i = 0; i < 6; i++) {
+        if (!btnZoomIn.hasAttribute('disabled')) {
+          fireEvent.click(btnZoomIn);
+        }
+      }
+
+      expect(zoomLevel).toHaveTextContent('400%');
+      expect(btnZoomIn).toBeDisabled();
+    });
   });
 
   describe('PinHistoryList Component', () => {

@@ -165,6 +165,11 @@ export const messages = {
     time: 'เวลา',
     fromCoords: 'จากพิกัด',
     toCoords: 'เป็นพิกัด',
+    zoomIn: 'ขยายแผนที่ (Zoom In)',
+    zoomOut: 'ลดสเกล (Zoom Out)',
+    resetZoom: 'รีเซ็ตมุมมอง (Reset View)',
+    zoomLevel: 'ระดับการซูม',
+    dragToPanHint: 'คลิกลากเพื่อเลื่อนดูพื้นที่',
   },
 } as const;
 

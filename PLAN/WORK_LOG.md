@@ -477,6 +477,26 @@
    - Unit tests [src/__tests__/google-maps.test.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/__tests__/google-maps.test.ts) เพิ่มการทดสอบการสกัดพิกัดและ short link ผ่านครบ 10/10 tests
    - ปรับปรุง [e2e/map-flow.spec.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/e2e/map-flow.spec.ts) ทดสอบการวางลิงก์ Google Maps นอกจังหวัด, ในจังหวัด, และการแก้ไขหมุดผ่านครบ 5/5 tests
    - ทดสอบ Full Regression (`npm test` 23 files / 221 tests, `npm run lint` 0 errors, Playwright E2E 58 tests) ผ่าน 100%
+---
 
+## [2026-10-30] Enhancement: Interactive Map Zoom & Scale Controls (ขยายและลดสเกลแผนที่)
 
-
+### 1. รายละเอียดการทำงาน (Implementation Details)
+1. **เพิ่มแผงควบคุมการซูมและสเกลแผนที่ (Interactive Floating Zoom Controls):**
+   - เพิ่มปุ่มลอยมุมขวาบนของแผนที่ประเทศไทย [src/components/ThailandMap.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/components/ThailandMap.tsx):
+     - ปุ่ม **Zoom In (`+`)** (`#btn-map-zoom-in`): ขยายแผนที่ขึ้นทีละ 40% สูงสุด 400%
+     - ป้ายแสดงระดับสเกลเปอร์เซ็นต์ (`data-testid="map-zoom-level"`): แสดงระดับการซูม เช่น `100%`, `140%`, `200%`, `280%`, `400%`
+     - ปุ่ม **Zoom Out (`−`)** (`#btn-map-zoom-out`): ลดสเกลแผนที่กลับลงมาต่ำสุดที่ 100% (เริ่มต้นถูก disabled เพื่อป้องกันการลดสเกลต่ำเกินไป)
+     - ปุ่ม **Reset View (`↺`)** (`#btn-map-zoom-reset`): รีเซ็ตมุมมองและพิกัดกึ่งกลางกลับสู่ตำแหน่งเริ่มต้น (100% Full Thailand View)
+   - ป้ายแนะนำ **คลิกลากเพื่อเลื่อนดูพื้นที่ (Drag to Pan)** (`data-testid="map-drag-hint"`) แสดงขึ้นโดยอัตโนมัติเมื่อซูมเข้า เพื่อให้ผู้ใช้ทราบว่าสามารถลากเลื่อนดูจังหวัดต่าง ๆ ได้อย่างอิสระ
+2. **การผสานงานกับ `ZoomableGroup` & Inverse CTM Coordinate Precision:**
+   - ใช้งาน `ZoomableGroup` จาก `react-simple-maps` ครอบกลุ่ม SVG Layer
+   - ปรับปรุงการคำนวณพิกัดการคลิกบนแผนที่ (`handleSvgClick`) ให้ใช้ SVG Screen CTM Inversion ผ่าน `contentGroupRef` ทำให้การคลิกปักหมุดหรือดูหมุดมีความแม่นยำ 100% ไม่ว่าผู้ใช้จะซูมเข้าหรือเลื่อนแผนที่ไปยังตำแหน่งใด
+3. **ระบบข้อความ (Localization Messages):**
+   - เพิ่มคีย์ `zoomIn`, `zoomOut`, `resetZoom`, `zoomLevel`, `dragToPanHint` ใน [src/lib/messages.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/src/lib/messages.ts)
+4. **การทดสอบความถูกต้อง (Test Verification):**
+   - **Unit Tests ([src/__tests__/portal-map-components.test.tsx](file:///d:/Ai/โปรเจค_roboq/QRcode/src/__tests__/portal-map-components.test.tsx)):** เพิ่มการทดสอบการเรนเดอร์ปุ่ม, การซูมเข้า, การซูมออก, การรีเซ็ต และการจำกัดสเกลสูงสุด 400% ผ่านครบ **12/12 tests (100% Passed)**
+   - **E2E Tests ([e2e/map-flow.spec.ts](file:///d:/Ai/โปรเจค_roboq/QRcode/e2e/map-flow.spec.ts)):** เพิ่ม E2E test ทดสอบการกดปุ่ม Zoom In, Zoom Out, Reset บนบราวเซอร์จริง ผ่านครบ **6/6 tests (100% Passed)**
+   - **Linter (`npm run lint`):** ผ่าน **0 errors, 0 warnings (100% Clean)**
+   - **Production Build (`npm run build`):** ผ่านฉลุย 100%
+   - **Browser Visual Inspection:** ยืนยันการแสดงผลผ่าน Chromium Browser Subagent พบปุ่มซูมลอยสวยงาม คมชัด เข้ากับธีม Dark/Light mode เรียบร้อย

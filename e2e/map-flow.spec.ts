@@ -242,4 +242,47 @@ test.describe('Phase 16 E2E: Thailand Map, Pinning & Audit History', () => {
 
     expect(seriousViolations).toEqual([]);
   });
+
+  test('Zoom Controls: ขยาย ลดสเกล และรีเซ็ตมุมมองบนแผนที่ได้จริง', async ({
+    page,
+    context,
+  }) => {
+    await setAuthCookie(context, 'admin', 'admin1');
+    await page.goto('/admin/map');
+
+    const zoomControls = page.locator('[data-testid="map-zoom-controls"]');
+    await expect(zoomControls).toBeVisible();
+
+    const btnZoomIn = page.locator('#btn-map-zoom-in');
+    const btnZoomOut = page.locator('#btn-map-zoom-out');
+    const btnReset = page.locator('#btn-map-zoom-reset');
+    const zoomLevel = page.locator('[data-testid="map-zoom-level"]');
+
+    // ระดับเริ่มต้นคือ 100%
+    await expect(zoomLevel).toHaveText('100%');
+    await expect(btnZoomOut).toBeDisabled();
+    await expect(btnReset).toBeDisabled();
+
+    // กดซูมเข้า (+)
+    await btnZoomIn.click();
+    await expect(zoomLevel).toHaveText('140%');
+    await expect(btnZoomOut).toBeEnabled();
+    await expect(btnReset).toBeEnabled();
+    await expect(page.locator('[data-testid="map-drag-hint"]')).toBeVisible();
+
+    // กดซูมเข้าอีกครั้ง (+)
+    await btnZoomIn.click();
+    await expect(zoomLevel).toHaveText('200%');
+
+    // กดซูมออก (-)
+    await btnZoomOut.click();
+    await expect(zoomLevel).toHaveText('140%');
+
+    // กดรีเซ็ตมุมมอง (↺)
+    await btnReset.click();
+    await expect(zoomLevel).toHaveText('100%');
+    await expect(btnZoomOut).toBeDisabled();
+    await expect(btnReset).toBeDisabled();
+    await expect(page.locator('[data-testid="map-drag-hint"]')).not.toBeVisible();
+  });
 });

@@ -54,6 +54,8 @@ describe("Phase 11: Auth API & Session Tests", () => {
 
   beforeEach(async () => {
     resetRateLimitStore();
+    await prisma.registrationPinLog.deleteMany();
+    await prisma.registration.deleteMany();
     await prisma.user.deleteMany();
 
     // Seed test users
@@ -78,6 +80,8 @@ describe("Phase 11: Auth API & Session Tests", () => {
   });
 
   afterAll(async () => {
+    await prisma.registrationPinLog.deleteMany();
+    await prisma.registration.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
